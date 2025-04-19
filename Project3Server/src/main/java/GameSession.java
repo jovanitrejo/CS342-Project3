@@ -1,0 +1,180 @@
+import MessageClasses.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
+public class GameSession implements Runnable {
+    private Thread gameThread;           // (1) hold onto the running thread
+    private final Piece[][] board = new Piece[6][7];
+    ArrayList<String> chat = new ArrayList<>();
+    Server.ClientThread player1;
+    Server.ClientThread player2;
+    Server.ClientThread currentPlayer;
+
+    public GameSession(Server.ClientThread player1, Server.ClientThread player2) {
+        this.player1 = player1;
+        this.player2 = player2;
+
+
+        // pick a random color for player1, and invert for player2
+        boolean p1IsRed  = ThreadLocalRandom.current().nextBoolean();
+        boolean p2IsRed  = !p1IsRed;
+
+        // pick a random starter, and invert for the other
+        boolean p1Starts = ThreadLocalRandom.current().nextBoolean();
+        boolean p2Starts = !p1Starts;
+
+        if (p1Starts) {
+            currentPlayer = player1;
+        } else {
+            currentPlayer = player2;
+        }
+        // Initialize the board
+        for (Piece[] pieces : board) {
+            Arrays.fill(pieces, Piece.EMPTY);
+        }
+
+        // notify both clients
+        player1.sendMessage(new NewGameResponse(
+                player2.getUsername(),   // opponent name
+                p1IsRed,                 // isRed?
+                p1Starts                 // isYourTurn?
+        ));
+        player2.sendMessage(new NewGameResponse(
+                player1.getUsername(),
+                p2IsRed,
+                p2Starts
+        ));
+    }
+
+    public void onMove(MoveMessage message, Server.ClientThread userWhoMadeMove) {
+        System.out.println("Checking if player could make a turn...");
+        if (userWhoMadeMove != currentPlayer) return;
+        System.out.println("Checking if player turn was valid...");
+        boolean successfulMove = attemptMove(message.row, message.col);
+        if (!successfulMove) return;
+        System.out.println("Checking for win");
+        List<int[]> winningPieces = findWinningPositions(message.row, message.col);
+        if (winningPieces != null) {
+            player1.sendMessage(new WinMessage(currentPlayer.getUsername(), winningPieces));
+            player2.sendMessage(new WinMessage(currentPlayer.getUsername(), winningPieces));
+            endGame();
+            return;
+        }
+        System.out.println("Checking for draw...");
+        if(isBoardFull()) {
+            player1.sendMessage(new DrawMessage());
+            player2.sendMessage(new DrawMessage());
+            endGame();
+            return;
+        }
+        currentPlayer = (currentPlayer == player1 ? player2 : player1);
+        System.out.println("Sending new board to players!");
+        Piece[][] boardCopy = snapshotBoard();
+        player1.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player1));
+        player2.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player2));
+    }
+
+    public void onChat(NewChatMessage chatMessage) {
+        chat.add(chatMessage.getMessageSender() + ": " + chatMessage.getMessage());
+        player1.sendMessage(new NewChatMessage(chatMessage.getMessage(), chatMessage.getMessage()));
+        player2.sendMessage(new NewChatMessage(chatMessage.getMessage(), chatMessage.getMessage()));
+    }
+
+    private boolean attemptMove(int row, int col) {
+        if(board[row][col] != Piece.EMPTY) {
+            return false;
+        } else {
+            Piece attempter = currentPlayer == player1 ? Piece.PLAYER1 : Piece.PLAYER2;
+            board[row][col] = attempter;
+            return true;
+        }
+    }
+
+    private Piece[][] snapshotBoard() {
+        Piece[][] copy = new Piece[6][7];
+        for (int i = 0; i < 6; i++) {
+            copy[i] = board[i].clone();
+        }
+        return copy;
+    }
+
+    private List<int[]> findWinningPositions(int row, int col) {
+        Piece me = board[row][col];
+        // horizontal
+        List<int[]> win = scanLine(row, col, 0, 1,  0, -1, me);
+        if (win != null) return win;
+        // vertical
+        win = scanLine(row, col, 1, 0,  -1, 0, me);
+        if (win != null) return win;
+        // “\” diagonal
+        win = scanLine(row, col, 1, 1,  -1, -1, me);
+        if (win != null) return win;
+        // “/” diagonal
+        win = scanLine(row, col, 1, -1,  -1, 1, me);
+        return win;
+    }
+
+    private boolean isBoardFull() {
+        for (Piece[] row : board) {
+            for (Piece p : row) {
+                if (p == Piece.EMPTY) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Scan out from (row,col) in (dr1,dc1) and (dr2,dc2), collect
+     * all contiguous pieces == me (including the origin), and if
+     * size>=4 return that list, else return null.
+     */
+    private List<int[]> scanLine(int row, int col,
+                                 int dr1, int dc1,
+                                 int dr2, int dc2,
+                                 Piece me)
+    {
+        List<int[]> cells = new ArrayList<>();
+        // include the piece just placed
+        cells.add(new int[]{row, col});
+
+        // scan 1st direction
+        int r = row + dr1, c = col + dc1;
+        scan(dr1, dc1, me, cells, r, c);
+
+        // scan opposite direction
+        r = row + dr2; c = col + dc2;
+        scan(dr2, dc2, me, cells, r, c);
+
+        return (cells.size() >= 4) ? cells : null;
+    }
+
+    private void scan(int dr1, int dc1, Piece me, List<int[]> cells, int r, int c) {
+        while (r >= 0 && r < board.length &&
+                c >= 0 && c < board[0].length &&
+                board[r][c] == me)
+        {
+            cells.add(new int[]{r, c});
+            r += dr1; c += dc1;
+        }
+    }
+
+    public void endGame() {
+        if (gameThread != null) {
+            gameThread.interrupt();
+        }
+    }
+
+    public void run() {
+        gameThread = Thread.currentThread();
+        try {
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
