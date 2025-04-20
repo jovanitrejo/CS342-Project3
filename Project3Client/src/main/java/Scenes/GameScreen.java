@@ -6,6 +6,8 @@ import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 
 import java.util.List;
@@ -21,11 +23,15 @@ public class GameScreen {
     private static class BoardSpot {
         private final StackPane cell = new StackPane();
         private final Text filled    = new Text("");
+        private final Circle circle = new Circle(20);
 
         BoardSpot() {
-            cell.getChildren().add(filled);
+//            cell.getChildren().add(filled);
+            //edits here
+            cell.getChildren().addAll(filled, circle);
             cell.setPrefSize(50, 50);
-            cell.setStyle("-fx-border-color: gray; -fx-background-color: lightblue;");
+            cell.setStyle("-fx-border-style: none ; -fx-background-color: #4987E9;");
+            circle.setFill(Color.rgb(82, 121, 203));
         }
 
         public StackPane getCellPane() {
@@ -40,9 +46,13 @@ public class GameScreen {
         /** paint an EMPTY/PLAYER1/PLAYER2 into this cell */
         public void updatePiece(Piece piece) {
             switch (piece) {
-                case EMPTY:   filled.setText("");   break;
-                case PLAYER1: filled.setText("R");  break;
-                case PLAYER2: filled.setText("Y");  break;
+//                case EMPTY:   filled.setText("");   break;
+//                case PLAYER1: filled.setText("R");  break;
+//                case PLAYER2: filled.setText("Y");  break;
+                //edits
+                case EMPTY:   circle.setFill(Color.rgb(82, 121, 203));   break;
+                case PLAYER1: circle.setFill(Color.rgb(200, 25, 25));  break;
+                case PLAYER2: circle.setFill(Color.rgb(200, 175, 25));  break;
             }
         }
     }
