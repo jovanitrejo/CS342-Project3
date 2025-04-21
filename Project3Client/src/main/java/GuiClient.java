@@ -25,7 +25,14 @@ public class GuiClient extends Application{
         currentGUI = loginScreen.getRoot();
         root.getChildren().add(currentGUI);
     }));
-	GameScreen gameScreen = new GameScreen(((row, col) -> clientConnection.send(new MoveMessage(row, col))));
+	GameScreen gameScreen = new GameScreen(((row, col) -> clientConnection.send(new MoveMessage(row, col))), (() -> {
+		clientConnection.send(new QuitMessage());
+		Platform.runLater(() -> {
+			root.getChildren().remove(currentGUI);
+			currentGUI = mainMenu.getRoot();
+			root.getChildren().add(currentGUI);
+		});
+	}));
 
 	MessageDispatcher messageDispatcher = new MessageDispatcher();
 	
@@ -65,9 +72,14 @@ public class GuiClient extends Application{
 
 		// Creating handler for new game response
 		messageDispatcher.registerHandler(NewGameResponse.class, (NewGameResponse message) -> Platform.runLater(() -> {
-            if (!message.isInQueue()) {
-                gameScreen.startNewGame(message.getOpponentUsername(), message.amIRed(), message.isItMyTurn());
-            }
+			gameScreen.startNewGame(message.getOpponentUsername(), message.amIRed(), message.isItMyTurn(), message.getPlayerSlot());
+			root.getChildren().remove(currentGUI);
+            currentGUI = gameScreen.getCurrentDisplay();
+            root.getChildren().add(currentGUI);
+        }));
+
+		//. Creating handler for in queue response
+		messageDispatcher.registerHandler(WaitingInQueueMessage.class, (WaitingInQueueMessage message) -> Platform.runLater(() -> {
             root.getChildren().remove(currentGUI);
             currentGUI = gameScreen.getCurrentDisplay();
             root.getChildren().add(currentGUI);
@@ -80,13 +92,19 @@ public class GuiClient extends Application{
 			System.out.println("Setting your turn...");
 			gameScreen.state.setIsYourTurn(board.isItMyTurn());
 			System.out.println("Refreshing the UI...");
-			Platform.runLater(() -> gameScreen.refreshBoardUI());
+			Platform.runLater(() -> {
+				gameScreen.refreshBoardUI();
+				gameScreen.changeTurnText();
+			});
 		});
 
 		// Creating handler for handling a winner
 		messageDispatcher.registerHandler(WinMessage.class, (winMessage -> {
 			gameScreen.state.setIsYourTurn(false);
-			gameScreen.highlightWinningPieces(winMessage.getWinningPieces());
+			Platform.runLater(() -> {
+				gameScreen.highlightWinningPieces(winMessage.getWinningPieces());
+				gameScreen.showGameEnded(false, winMessage.didIWin());
+			});
 		}));
 
 		// Creating handler for handling a quitter
@@ -99,6 +117,9 @@ public class GuiClient extends Application{
 				root.getChildren().add(currentGUI);
 			});
 		}));
+
+		// Creating handler for handling a draw game
+		messageDispatcher.registerHandler(DrawMessage.class, (drawMessage -> Platform.runLater(() -> gameScreen.showGameEnded(true, false))));
 
 							
 		clientConnection.start();
