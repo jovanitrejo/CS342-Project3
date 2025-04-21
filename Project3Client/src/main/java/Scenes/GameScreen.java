@@ -5,12 +5,16 @@ import contexts.GameState;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.effect.InnerShadow;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
+import javafx.scene.control.Button;
+import utils.CustomJavaFXElementsTools;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -20,6 +24,8 @@ public class GameScreen {
     public  GameState state;
     private final BoardSpot[][] board = new BoardSpot[6][7];
     private final BiConsumer<Integer, Integer> callback;
+    private final Runnable mainMenuCallback;
+    private Text turnLabel;
 
     /** each spot knows how to paint itself from a Piece */
     private static class BoardSpot {
@@ -29,10 +35,7 @@ public class GameScreen {
         InnerShadow innerShadow = new InnerShadow();
 
         BoardSpot() {
-//            cell.getChildren().add(filled);
-            //edits here
             cell.getChildren().addAll(filled, circle);
-//            cell.setPrefSize(50, 50);
             cell.setPrefSize(95, 85);
             cell.setStyle("-fx-border-style: none ; -fx-background-color: #4987E9;");
             circle.setFill(Color.rgb(82, 121, 203));
@@ -54,28 +57,52 @@ public class GameScreen {
         }
 
         /** paint an EMPTY/PLAYER1/PLAYER2 into this cell */
-        public void updatePiece(Piece piece) {
-            switch (piece) {
-//                case EMPTY:   filled.setText("");   break;
-//                case PLAYER1: filled.setText("R");  break;
-//                case PLAYER2: filled.setText("Y");  break;
-                //edits
-                case EMPTY:   circle.setFill(Color.rgb(82, 121, 203));   break;
-                case PLAYER1: circle.setFill(Color.rgb(200, 25, 25));  break;
-                case PLAYER2: circle.setFill(Color.rgb(200, 175, 25));  break;
-            }
+        public void setColor(Color c) {
+            circle.setFill(c);
         }
     }
 
-    public GameScreen(BiConsumer<Integer, Integer> callback) {
+    public GameScreen(BiConsumer<Integer, Integer> callback, Runnable mainMenuCallback) {
         this.callback = callback;
+        this.mainMenuCallback = mainMenuCallback;
         Text waiting = new Text("Waiting for opponent...");
         currentDisplay = new StackPane(waiting);
         StackPane.setAlignment(waiting, Pos.CENTER);
     }
 
-    public void startNewGame(String opponent, boolean isRed, boolean isYourTurn) {
-        state = new GameState(opponent, isRed, isYourTurn);
+    public void startNewGame(String opponent, boolean isRed, boolean isYourTurn, int playerSlot) {
+        state = new GameState(isRed, isYourTurn, playerSlot);
+        System.out.println("You are " + (isRed ? "red!" : "yellow!"));
+        System.out.println("You are playing against: " + opponent);
+        // Adding opponent info to screen
+        VBox opponentInfo;
+        Text filler = new Text("Current Opponent:");
+        filler.setFont(Font.font("Londrina Solid", 24));
+        filler.setFill(Color.WHITE);
+        filler.setStroke(Color.BLACK);
+        filler.setStrokeWidth(1); // Thin black stroke
+        filler.setTextAlignment(TextAlignment.CENTER);
+
+        Text opponentName = new Text(opponent);
+        opponentName.setFont(Font.font("Londrina Solid", 36));
+        opponentName.setFill(isRed
+                ? Color.web("#FFE123")   // if you are red, opponent is yellow
+                : Color.web("#FF0000")); // If you are yellow, opponent is red
+        opponentName.setStroke(Color.BLACK);
+        opponentName.setStrokeWidth(1); // Thin black stroke
+        opponentName.setTextAlignment(TextAlignment.CENTER);
+
+        opponentInfo = new VBox(filler, opponentName);
+        opponentInfo.setPrefSize(300, 120);
+        opponentInfo.setPickOnBounds(false);
+
+        // Adding text to inform whose turn it is
+        turnLabel = new Text(isYourTurn ? "Your turn..." : "Opponent's Turn...");
+        turnLabel.setFont(Font.font("Londrina Solid", 36));
+        turnLabel.setFill(Color.WHITE);
+        turnLabel.setStroke(Color.BLACK);
+        turnLabel.setPickOnBounds(false);
+
 
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
@@ -101,15 +128,26 @@ public class GameScreen {
             });
         }
 
-        currentDisplay = new StackPane(grid);
+        // Add a quit button
+        Button quitButton = CustomJavaFXElementsTools.createStyledButton(100, 50, "#FF0000", Color.WHITE, "Quit", 24);
+        quitButton.setOnAction(e -> mainMenuCallback.run());
+
+
+        currentDisplay = new StackPane(grid, opponentInfo, turnLabel, quitButton);
+        StackPane.setAlignment(quitButton, Pos.TOP_RIGHT);
+        StackPane.setAlignment(opponentInfo, Pos.CENTER_LEFT);
+        StackPane.setAlignment(turnLabel, Pos.TOP_CENTER);
     }
 
-    /** call this when you get a full new board back from the server */
+    // Re-renders the UI with the new game board. Will be called on a new BoardMessage.
     public void refreshBoardUI() {
         Piece[][] b = state.getGameBoard();
         for (int r = 0; r < 6; r++) {
             for (int c = 0; c < 7; c++) {
-                board[r][c].updatePiece(b[r][c]);
+                Piece p = b[r][c];
+                if (p == state.getMyPiece())  board[r][c].setColor(state.getMyColor());
+                else if (p == state.getOppPiece()) board[r][c].setColor(state.getOppColor());
+                else board[r][c].setColor(Color.rgb(82,121,203));
             }
         }
     }
@@ -123,8 +161,46 @@ public class GameScreen {
         });
     }
 
+    public void showGameEnded(boolean wasDraw, boolean youWon) {
+        if (wasDraw) {
+            turnLabel.setText("IT'S A DRAW!!!");
+        } else {
+            if (youWon) {
+                turnLabel.setText("YOU WIN!!!");
+                turnLabel.setFill(Color.web("#00D928"));
+            } else {
+                turnLabel.setText("YOU LOST!!!");
+                turnLabel.setFill(Color.web("#FF0000"));
+            }
+        }
+        // Construct a replay option menu
+        Button replayButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Replay", 24);
+        Button quitButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Back to Main Menu", 24);
+        quitButton.setOnAction(e -> mainMenuCallback.run());
+        Text gameStats = new Text(state.amIRed() ? (youWon ? "RED WINS!" : "YELLOW WINS!") : (youWon ? "YELLOW WINS!" : "RED WINS!"));
+        gameStats.setFont(new Font("Londrina Solid", 36));
+        gameStats.setFill(Color.BLACK);
+        VBox buttons = new VBox(20, replayButton, quitButton);
+
+        VBox optionsMenu = new VBox(gameStats, buttons);
+        optionsMenu.setPrefSize(260, 400);
+        optionsMenu.setMaxSize(260, 400);
+        optionsMenu.setStyle("-fx-background-color: #FBFDD6");
+        StackPane.setAlignment(gameStats, Pos.TOP_CENTER);
+        StackPane.setAlignment(buttons, Pos.BOTTOM_CENTER);
+
+        // Add to screen
+        Group menuGroup = new Group(optionsMenu);
+        StackPane.setAlignment(menuGroup, Pos.CENTER_RIGHT);
+        getCurrentDisplay().getChildren().add(menuGroup);
+    }
+
     public StackPane getCurrentDisplay() {
         return currentDisplay;
+    }
+
+    public void changeTurnText() {
+        turnLabel.setText(state.isYourTurn() ? "Your Turn..." : "Opponent's Turn");
     }
 
     public void handleQuit() {
