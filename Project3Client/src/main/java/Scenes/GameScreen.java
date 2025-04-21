@@ -3,7 +3,9 @@ package Scenes;
 import MessageClasses.Piece;
 import contexts.GameState;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.effect.InnerShadow;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
@@ -23,15 +25,22 @@ public class GameScreen {
     private static class BoardSpot {
         private final StackPane cell = new StackPane();
         private final Text filled    = new Text("");
-        private final Circle circle = new Circle(20);
+        private final Circle circle = new Circle(30);
+        InnerShadow innerShadow = new InnerShadow();
 
         BoardSpot() {
 //            cell.getChildren().add(filled);
             //edits here
             cell.getChildren().addAll(filled, circle);
-            cell.setPrefSize(50, 50);
+//            cell.setPrefSize(50, 50);
+            cell.setPrefSize(95, 85);
             cell.setStyle("-fx-border-style: none ; -fx-background-color: #4987E9;");
             circle.setFill(Color.rgb(82, 121, 203));
+            circle.setEffect(innerShadow);
+            circle.setId("circle");
+            innerShadow.setOffsetX(0);
+            innerShadow.setOffsetY(5);
+            innerShadow.setColor(Color.rgb(0, 0, 0, 0.25));
         }
 
         public StackPane getCellPane() {
@@ -40,7 +49,8 @@ public class GameScreen {
 
         public void highlight() {
             filled.setText("W");
-            cell.setStyle("-fx-border-color: gray; -fx-background-color: gold;");
+            //cell.setStyle("-fx-border-color: gray; -fx-background-color: gold;");
+            cell.lookup("#circle").setStyle("-fx-stroke: #00FF66; -fx-stroke-width: 5px");
         }
 
         /** paint an EMPTY/PLAYER1/PLAYER2 into this cell */
@@ -69,6 +79,7 @@ public class GameScreen {
 
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
+        grid.setPadding(new Insets(30,30,30,30));
 
         // 1) build the UI grid
         for (int r = 0; r < 6; r++) {
