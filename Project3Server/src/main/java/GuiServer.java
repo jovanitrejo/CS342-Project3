@@ -75,7 +75,7 @@ public class GuiServer extends Application{
 				// at least one player in the queue
 				Server.ClientThread opponent = serverConnection.waitingForGame.get(0);
 				serverConnection.waitingForGame.remove(opponent);
-				Thread newGame = getThread(clientThread, opponent);
+				Thread newGame = getThread(opponent, clientThread);
 
 				synchronized(activeGames) {
 					activeGames.add(newGame);
@@ -84,7 +84,7 @@ public class GuiServer extends Application{
 			} else {
 				Platform.runLater(() -> listItems.getItems().add("A player wants to play, need to find an opponent..."));
 				serverConnection.waitingForGame.add(clientThread);
-				clientThread.sendMessage(new NewGameResponse());
+				clientThread.sendMessage(new WaitingInQueueMessage());
 			}
 		}));
 
@@ -95,6 +95,20 @@ public class GuiServer extends Application{
 		});
 
 		// Handling quit
+		dispatcher.registerHandler(QuitMessage.class, ((quitMessage, clientThread) -> {
+			Platform.runLater(() -> listItems.getItems().add("Some one quit the game! Shutting down active game..."));
+			// Remove from the list of active games
+			activeGames.remove(getThread(clientThread.activeGame.player1, clientThread.activeGame.player2));
+			GameSession currentGame = clientThread.activeGame.player1.activeGame;
+			// Set both players' active game status to null since someone quit.
+			currentGame.player1.activeGame = null;
+			currentGame.player2.activeGame = null;
+			// Send QuitMessage to both players
+			currentGame.player1.sendMessage(new QuitMessage());
+			currentGame.player2.sendMessage(new QuitMessage());
+			// End game thread.
+			currentGame.endGame();
+		}));
 
 		
 		listItems = new ListView<>();
