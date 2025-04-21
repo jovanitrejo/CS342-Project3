@@ -137,6 +137,9 @@ public class GameScreen {
         StackPane.setAlignment(quitButton, Pos.TOP_RIGHT);
         StackPane.setAlignment(opponentInfo, Pos.CENTER_LEFT);
         StackPane.setAlignment(turnLabel, Pos.TOP_CENTER);
+        StackPane.setMargin(quitButton, new Insets(30,30,0,0));
+        StackPane.setMargin(turnLabel, new Insets(30,0,0,0));
+        StackPane.setMargin(opponentInfo, new Insets(325,0,0,25));
     }
 
     // Re-renders the UI with the new game board. Will be called on a new BoardMessage.
