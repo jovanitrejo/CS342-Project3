@@ -79,7 +79,6 @@ public class Server{
 					connection.setTcpNoDelay(true);	
 				}
 				catch(Exception e) {
-					e.printStackTrace();
 					System.out.println("Streams not open");
 				}
 
@@ -89,11 +88,11 @@ public class Server{
 					    	dispatcher.dispatch(data, this);
 					    	}
 					    catch(Exception e) {
-							e.printStackTrace();
 					    	guiLogger.accept("Oops...Something wrong with the socket from client: " + count + "....closing down!");
 					    	clients.remove(this);
                             waitingForGame.remove(this);
 							if (this.activeGame != null) {
+								// Shuts down an active game if there is one. Sends the other player back to the main menu.
 								Platform.runLater(() -> guiLogger.accept("User quit while playing an active game! Sending quit message to other player..."));
 								ClientThread opponent = this.activeGame.player1 == this ? activeGame.player2 : activeGame.player1;
 								this.activeGame.endGame();
@@ -123,7 +122,6 @@ public class Server{
 				try {
 					out.writeObject(message);
 				} catch (IOException e) {
-					e.printStackTrace();
 					throw new RuntimeException(e);
 				}
 			}
