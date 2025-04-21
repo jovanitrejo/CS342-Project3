@@ -1,3 +1,4 @@
+MessageClasses/WaitingInQueueMessage.class
 MessageClasses/Message.class
 GuiServer.class
 MessageClasses/Piece.class

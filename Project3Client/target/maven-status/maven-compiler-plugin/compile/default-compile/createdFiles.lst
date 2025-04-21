@@ -1,3 +1,4 @@
+MessageClasses/WaitingInQueueMessage.class
 MessageClasses/LoginMessage.class
 MessageClasses/DrawMessage.class
 Scenes/ChatBox.class
@@ -18,5 +19,4 @@ MessageClasses/NewGameMessage.class
 MessageClasses/LoginResponse.class
 Scenes/MainMenu.class
 Scenes/GameScreen$BoardSpot.class
-Scenes/GameScreen$1.class
 utils/CustomJavaFXElementsTools.class
