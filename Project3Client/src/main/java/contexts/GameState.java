@@ -1,26 +1,42 @@
 package contexts;
 
 import MessageClasses.Piece;
-import javafx.application.Platform;
-
 import java.util.Arrays;
-import java.util.List;
+import javafx.scene.paint.Color;
 
 public class GameState {
-    private final String opponent;
     private boolean isYourTurn;
     private final boolean isRed;            // assigned color
     private Piece[][] gameBoard; // 6×7 board of EMPTY/PLAYER1/PLAYER2
+    private final Piece myPiece; // PLAYER1 or PLAYER2
+    private final Piece oppPiece;
+    private final Color myColor;
+    private final Color oppColor;
 
-    public GameState(String opponent, boolean isRed, boolean isYourTurn) {
-        this.opponent   = opponent;
-        this.isRed      = isRed;
+    public GameState(boolean isRed, boolean isYourTurn, int mySlot) {
+        this.isRed = isRed;
         this.isYourTurn = isYourTurn;
         this.gameBoard  = new Piece[6][7];
         for (Piece[] row : gameBoard) {
             Arrays.fill(row, Piece.EMPTY);
         }
+
+        this.myPiece = (mySlot == 1 ? Piece.PLAYER1 : Piece.PLAYER2);
+        this.oppPiece = (mySlot == 1 ? Piece.PLAYER2 : Piece.PLAYER1);
+
+        this.myColor  = isRed
+                ? Color.rgb(200,25,25)   // red
+                : Color.rgb(200,175,25); // yellow
+        this.oppColor = isRed
+                ? Color.rgb(200,175,25)
+                : Color.rgb(200,25,25);
+        // …
     }
+
+    public Piece   getMyPiece()   { return myPiece; }
+    public Piece   getOppPiece()  { return oppPiece; }
+    public Color   getMyColor()   { return myColor; }
+    public Color   getOppColor()  { return oppColor; }
 
     public Piece[][] getGameBoard() {return this.gameBoard;}
 
@@ -49,9 +65,7 @@ public class GameState {
      */
     public int applyMove(int column) {
         int row = findFreeRow(column);
-        gameBoard[row][column] = isRed
-                ? Piece.PLAYER1
-                : Piece.PLAYER2;
+        gameBoard[row][column] = myPiece;
         return row;
     }
 
@@ -60,5 +74,8 @@ public class GameState {
         System.out.println("It is " + (isYourTurn ? "" : "NOT") + " your turn");
         this.isYourTurn = isYourTurn;
     }
-    public String getOpponent(){ return opponent;   }
+
+    public boolean amIRed() {
+        return this.isRed;
+    }
 }
