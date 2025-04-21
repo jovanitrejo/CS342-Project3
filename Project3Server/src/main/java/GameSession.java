@@ -40,12 +40,14 @@ public class GameSession implements Runnable {
         player1.sendMessage(new NewGameResponse(
                 player2.getUsername(),   // opponent name
                 p1IsRed,                 // isRed?
-                p1Starts                 // isYourTurn?
+                p1Starts,                 // isYourTurn?
+                1
         ));
         player2.sendMessage(new NewGameResponse(
                 player1.getUsername(),
                 p2IsRed,
-                p2Starts
+                p2Starts,
+                2
         ));
     }
 
@@ -58,8 +60,12 @@ public class GameSession implements Runnable {
         System.out.println("Checking for win");
         List<int[]> winningPieces = findWinningPositions(message.row, message.col);
         if (winningPieces != null) {
-            player1.sendMessage(new WinMessage(currentPlayer.getUsername(), winningPieces));
-            player2.sendMessage(new WinMessage(currentPlayer.getUsername(), winningPieces));
+            // The game found a winning move, end the game here and notify both clients.
+            Piece[][] boardCopy = snapshotBoard();
+            player1.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player1));
+            player2.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player2));
+            player1.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player1.getUsername()), winningPieces));
+            player2.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player2.getUsername()), winningPieces));
             endGame();
             return;
         }
@@ -93,6 +99,7 @@ public class GameSession implements Runnable {
         }
     }
 
+    // Creates a copy of the server board. Used to send to clients after updating the board.
     private Piece[][] snapshotBoard() {
         Piece[][] copy = new Piece[6][7];
         for (int i = 0; i < 6; i++) {
@@ -101,6 +108,7 @@ public class GameSession implements Runnable {
         return copy;
     }
 
+    // Scans the board to check for wins in all possible directions (horizontal, vertical, and diagonal)
     private List<int[]> findWinningPositions(int row, int col) {
         Piece me = board[row][col];
         // horizontal
@@ -117,6 +125,7 @@ public class GameSession implements Runnable {
         return win;
     }
 
+    // Checks to see if there are any empty pieces in the board.
     private boolean isBoardFull() {
         for (Piece[] row : board) {
             for (Piece p : row) {
