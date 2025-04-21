@@ -180,12 +180,28 @@ public class GameScreen {
         Button replayButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Replay", 24);
         Button quitButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Back to Main Menu", 24);
         quitButton.setOnAction(e -> mainMenuCallback.run());
-        Text gameStats = new Text(state.amIRed() ? (youWon ? "RED WINS!" : "YELLOW WINS!") : (youWon ? "YELLOW WINS!" : "RED WINS!"));
+        Text gameStats = new Text(state.amIRed() ? (youWon ? " RED WINS!" : " YELLOW WINS!") : (youWon ? " YELLOW WINS!" : " RED WINS!"));
+        Text statusLabel = new Text(" Game Stats:");
+        Text winType = new Text(" Horizontal Win");
+        Text totalMoves = new Text(" Total Moves: XX");
+        Text time = new Text(" Elapsed: X min");
+        //styles of all Texts - can be put in CSS if needed, but be careful not all Text color Black
         gameStats.setFont(new Font("Londrina Solid", 36));
         gameStats.setFill(Color.BLACK);
-        VBox buttons = new VBox(20, replayButton, quitButton);
+        statusLabel.setFont(new Font("Londrina Solid", 36));
+        statusLabel.setFill(Color.BLACK);
+        winType.setFont(new Font("Londrina Solid", 36));
+        winType.setFill(Color.BLACK);
+        totalMoves.setFont(new Font("Londrina Solid", 36));
+        totalMoves.setFill(Color.BLACK);
+        time.setFont(new Font("Londrina Solid", 36));
+        time.setFill(Color.BLACK);
 
-        VBox optionsMenu = new VBox(gameStats, buttons);
+        VBox buttons = new VBox(20, replayButton, quitButton);
+        buttons.setAlignment(Pos.CENTER);
+        buttons.setPadding(new Insets(30,0,0,0));
+
+        VBox optionsMenu = new VBox(gameStats, statusLabel, winType, totalMoves, time, buttons);
         optionsMenu.setPrefSize(260, 400);
         optionsMenu.setMaxSize(260, 400);
         optionsMenu.setStyle("-fx-background-color: #FBFDD6");
@@ -194,7 +210,9 @@ public class GameScreen {
 
         // Add to screen
         Group menuGroup = new Group(optionsMenu);
-        StackPane.setAlignment(menuGroup, Pos.CENTER_RIGHT);
+//        StackPane.setAlignment(menuGroup, Pos.CENTER_RIGHT);
+        StackPane.setAlignment(menuGroup, Pos.TOP_RIGHT);
+        StackPane.setMargin(menuGroup, new Insets(105,30,0,0));
         getCurrentDisplay().getChildren().add(menuGroup);
     }
 
