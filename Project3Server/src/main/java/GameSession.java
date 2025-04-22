@@ -1,8 +1,11 @@
 import MessageClasses.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javafx.util.Pair;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class GameSession implements Runnable {
@@ -12,8 +15,11 @@ public class GameSession implements Runnable {
     Server.ClientThread player1;
     Server.ClientThread player2;
     Server.ClientThread currentPlayer;
+    private final Instant startTime;
+    private int totalMoves = 0;
 
     public GameSession(Server.ClientThread player1, Server.ClientThread player2) {
+        this.startTime = Instant.now();
         this.player1 = player1;
         this.player2 = player2;
 
@@ -57,22 +63,27 @@ public class GameSession implements Runnable {
         System.out.println("Checking if player turn was valid...");
         boolean successfulMove = attemptMove(message.row, message.col);
         if (!successfulMove) return;
+        totalMoves++;
         System.out.println("Checking for win");
-        List<int[]> winningPieces = findWinningPositions(message.row, message.col);
-        if (winningPieces != null) {
+        Pair<List<int[]>, String> winningPieces = findWinningPositions(message.row, message.col);
+        if (winningPieces.getKey() != null) {
             // The game found a winning move, end the game here and notify both clients.
+            Instant endTime = Instant.now();
+            long minutes = Duration.between(startTime, endTime).toMinutes();
             Piece[][] boardCopy = snapshotBoard();
             player1.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player1));
             player2.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player2));
-            player1.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player1.getUsername()), winningPieces));
-            player2.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player2.getUsername()), winningPieces));
+            player1.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player1.getUsername()), winningPieces.getKey(), minutes, totalMoves, winningPieces.getValue()));
+            player2.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player2.getUsername()), winningPieces.getKey(), minutes, totalMoves, winningPieces.getValue()));
             endGame();
             return;
         }
         System.out.println("Checking for draw...");
         if(isBoardFull()) {
-            player1.sendMessage(new DrawMessage());
-            player2.sendMessage(new DrawMessage());
+            Instant endTime = Instant.now();
+            long minutes = Duration.between(startTime, endTime).toMinutes();
+            player1.sendMessage(new DrawMessage(minutes, totalMoves));
+            player2.sendMessage(new DrawMessage(minutes, totalMoves));
             endGame();
             return;
         }
@@ -109,20 +120,20 @@ public class GameSession implements Runnable {
     }
 
     // Scans the board to check for wins in all possible directions (horizontal, vertical, and diagonal)
-    private List<int[]> findWinningPositions(int row, int col) {
+    private Pair<List<int[]>, String> findWinningPositions(int row, int col) {
         Piece me = board[row][col];
         // horizontal
         List<int[]> win = scanLine(row, col, 0, 1,  0, -1, me);
-        if (win != null) return win;
+        if (win != null) return new Pair<>(win, "Horizontal");
         // vertical
         win = scanLine(row, col, 1, 0,  -1, 0, me);
-        if (win != null) return win;
+        if (win != null) return new Pair<>(win, "Vertical");
         // “\” diagonal
         win = scanLine(row, col, 1, 1,  -1, -1, me);
-        if (win != null) return win;
+        if (win != null) return new Pair<>(win, "Diagonal");
         // “/” diagonal
         win = scanLine(row, col, 1, -1,  -1, 1, me);
-        return win;
+        return new Pair<>(win, "Diagonal");
     }
 
     // Checks to see if there are any empty pieces in the board.
