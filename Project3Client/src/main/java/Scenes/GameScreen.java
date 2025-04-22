@@ -3,9 +3,11 @@ package Scenes;
 import MessageClasses.Piece;
 import contexts.GameState;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -17,20 +19,34 @@ import javafx.scene.control.Button;
 import utils.CustomJavaFXElementsTools;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class GameScreen {
     private StackPane currentDisplay;
-    public  GameState state;
+    public GameState state;
+    public ChatBox chatBox;
     private final BoardSpot[][] board = new BoardSpot[6][7];
     private final BiConsumer<Integer, Integer> callback;
     private final Runnable mainMenuCallback;
+    private final Runnable replayButtonCallback;
+    private final Runnable replayAcceptedCallback;
+    private final Runnable replayDeniedCallback;
+    private final Consumer<String> sendMessageCallback;
     private Text turnLabel;
-
+    private Button makeMove;
+    public Button replayButton;
+    private final VBox quitPopUp;
+    private int selectedRow = -1;
+    private int selectedCol = -1;
+    public Button quitButton;
+    public String opponentUsername;
+    private VBox replayPopUp;
     /** each spot knows how to paint itself from a Piece */
     private static class BoardSpot {
         private final StackPane cell = new StackPane();
-        private final Text filled    = new Text("");
+        private final Text filled = new Text("");
         private final Circle circle = new Circle(30);
         InnerShadow innerShadow = new InnerShadow();
 
@@ -50,9 +66,18 @@ public class GameScreen {
             return cell;
         }
 
+        public void showSelectable() {
+            cell.lookup("#circle").setStyle("-fx-stroke: #FFFFFF; -fx-stroke-width: 2px");
+        }
+        public void removeSelectable() {
+            cell.lookup("#circle").setStyle("");
+        }
+
+        public void selectPiece() { cell.lookup("#circle").setStyle("-fx-stroke: #FFFFFF; -fx-stroke-width: 4px");}
+        public void unselectPiece() { cell.lookup("#circle").setStyle("");}
+
         public void highlight() {
             filled.setText("W");
-            //cell.setStyle("-fx-border-color: gray; -fx-background-color: gold;");
             cell.lookup("#circle").setStyle("-fx-stroke: #00FF66; -fx-stroke-width: 5px");
         }
 
@@ -62,12 +87,19 @@ public class GameScreen {
         }
     }
 
-    public GameScreen(BiConsumer<Integer, Integer> callback, Runnable mainMenuCallback) {
+    public GameScreen(BiConsumer<Integer, Integer> callback, Runnable mainMenuCallback, Runnable replayButtonCallback, Runnable replayAcceptedCallback, Runnable replayDeniedCallback, Consumer<String> sendMessageCallback) {
         this.callback = callback;
         this.mainMenuCallback = mainMenuCallback;
+        this.replayButtonCallback = replayButtonCallback;
+        this.replayAcceptedCallback = replayAcceptedCallback;
+        this.replayDeniedCallback = replayDeniedCallback;
+        this.sendMessageCallback = sendMessageCallback;
         Text waiting = new Text("Waiting for opponent...");
         currentDisplay = new StackPane(waiting);
         StackPane.setAlignment(waiting, Pos.CENTER);
+        quitButton = CustomJavaFXElementsTools.createStyledButton(100, 50, "#FF0000", Color.WHITE, "Quit", 24, true);
+        quitButton.setOnAction(e -> {showPopUp(); hideQuitButton();});
+        quitPopUp = CustomJavaFXElementsTools.createPopUp(() -> {mainMenuCallback.run(); handleQuit();}, () -> {hidePopUp(); showQuitButton();}, "Are you sure you want to quit?", "Yes", "No");
     }
 
     public void startNewGame(String opponent, boolean isRed, boolean isYourTurn, int playerSlot) {
@@ -83,6 +115,10 @@ public class GameScreen {
         filler.setStrokeWidth(1); // Thin black stroke
         filler.setTextAlignment(TextAlignment.CENTER);
 
+        // Initialize chat
+        chatBox = new ChatBox(state.getMyColor(), state.getOppColor(), sendMessageCallback);
+
+        this.opponentUsername = opponent;
         Text opponentName = new Text(opponent);
         opponentName.setFont(Font.font("Londrina Solid", 36));
         opponentName.setFill(isRed
@@ -103,7 +139,19 @@ public class GameScreen {
         turnLabel.setStroke(Color.BLACK);
         turnLabel.setPickOnBounds(false);
 
-
+        // Initialize the make move button.
+        makeMove = CustomJavaFXElementsTools.createStyledButton(150, 50, isRed ? "#FF0000" : "#FFE123", Color.WHITE, "Make Move", 24, true);
+        makeMove.setOnAction(e -> {
+            if (selectedRow == -1 || selectedCol == -1) return;
+            board[selectedRow][selectedCol].unselectPiece();
+            state.applyMove(selectedCol);
+            callback.accept(selectedRow, selectedCol);
+            selectedRow = -1;
+            selectedCol = -1;
+            hideMakeMoveButton();
+            state.setIsYourTurn(false);
+        });
+        makeMove.setPickOnBounds(false);
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setPadding(new Insets(30,30,30,30));
@@ -119,27 +167,47 @@ public class GameScreen {
         // 2) wire the top‐row clicks to drop a piece
         for (int c = 0; c < 7; c++) {
             final int col = c;
-            board[0][c].getCellPane().setOnMouseClicked(e -> {
-                if (!state.isYourTurn()) return; // ignore if not your turn
-                System.out.println("Sending move to the server!");
-                int row = state.applyMove(col);// model: drop the piece
-                state.setIsYourTurn(false);
-                callback.accept(row, col);
-            });
+            for (int r = 0; r < 6; r++) {
+                int finalR = r;
+                board[r][c].getCellPane().setOnMouseEntered(e -> {
+                    if (finalR == selectedRow && col == selectedCol) return;
+                    if (!state.isYourTurn()) return;
+                    int row = state.findFreeRow(col);
+                    if (row == selectedRow && col == selectedCol) return;
+                    board[row][col].showSelectable();
+                });
+                board[r][c].getCellPane().setOnMouseExited(e -> {
+                    if (finalR == selectedRow && col == selectedCol) return;
+                    if (!state.isYourTurn()) return;
+                    int row = state.findFreeRow(col);
+                    if (row == selectedRow && col == selectedCol) return;
+                    board[row][col].removeSelectable();
+                });
+                board[r][c].getCellPane().setOnMouseClicked(e -> {
+                    if (selectedRow != -1 && selectedCol != -1) {
+                        board[selectedRow][selectedCol].unselectPiece();
+                    }
+                    if (!state.isYourTurn()) return; // ignore if not your turn
+                    System.out.println("Sending move to the server!");
+                    int row = state.findFreeRow(col);// model: drop the piece
+                    board[row][col].removeSelectable();
+                    board[row][col].selectPiece();
+                    selectedRow = row;
+                    selectedCol = col;
+                    showMakeMoveButton();
+                });
+            }
         }
-
-        // Add a quit button
-        Button quitButton = CustomJavaFXElementsTools.createStyledButton(100, 50, "#FF0000", Color.WHITE, "Quit", 24);
-        quitButton.setOnAction(e -> mainMenuCallback.run());
-
-
-        currentDisplay = new StackPane(grid, opponentInfo, turnLabel, quitButton);
+        currentDisplay = new StackPane(grid, opponentInfo, turnLabel, quitButton, chatBox.getRoot());
         StackPane.setAlignment(quitButton, Pos.TOP_RIGHT);
         StackPane.setAlignment(opponentInfo, Pos.CENTER_LEFT);
         StackPane.setAlignment(turnLabel, Pos.TOP_CENTER);
+        StackPane.setAlignment(makeMove, Pos.CENTER_RIGHT);
+        StackPane.setAlignment(chatBox.getRoot(), Pos.BOTTOM_RIGHT);
         StackPane.setMargin(quitButton, new Insets(30,30,0,0));
         StackPane.setMargin(turnLabel, new Insets(30,0,0,0));
         StackPane.setMargin(opponentInfo, new Insets(325,0,0,25));
+        StackPane.setMargin(chatBox.getRoot(), new Insets(0, 35, 0, 0));
     }
 
     // Re-renders the UI with the new game board. Will be called on a new BoardMessage.
@@ -164,7 +232,9 @@ public class GameScreen {
         });
     }
 
-    public void showGameEnded(boolean wasDraw, boolean youWon) {
+    public void showGameEnded(boolean wasDraw, boolean youWon, long lengthInMinutes, int totalNumMoves, String winDirection) {
+        // hide the quit button
+        hideQuitButton();
         if (wasDraw) {
             turnLabel.setText("IT'S A DRAW!!!");
         } else {
@@ -177,15 +247,19 @@ public class GameScreen {
             }
         }
         // Construct a replay option menu
-        Button replayButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Replay", 24);
-        Button quitButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Back to Main Menu", 24);
+        replayButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Replay", 24, false);
+        Button quitButton = CustomJavaFXElementsTools.createStyledButton(215, 50, "#26940B", Color.WHITE, "Back to Main Menu", 24, false);
         quitButton.setOnAction(e -> mainMenuCallback.run());
+        replayButton.setOnAction(e -> {
+            replayButtonCallback.run();
+            replayButton.setText("Sent!");
+            replayButton.setDisable(true);
+        });
         Text gameStats = new Text(state.amIRed() ? (youWon ? " RED WINS!" : " YELLOW WINS!") : (youWon ? " YELLOW WINS!" : " RED WINS!"));
         Text statusLabel = new Text(" Game Stats:");
-        Text winType = new Text(" Horizontal Win");
-        Text totalMoves = new Text(" Total Moves: XX");
-        Text time = new Text(" Elapsed: X min");
-        //styles of all Texts - can be put in CSS if needed, but be careful not all Text color Black
+        Text winType = !Objects.equals(winDirection, " None") ? new Text(" " + winDirection +" Win") : new Text(winDirection);
+        Text totalMoves = new Text(" Total Moves: " + totalNumMoves);
+        Text time = new Text(" Elapsed: " + lengthInMinutes + " min");
         gameStats.setFont(new Font("Londrina Solid", 36));
         gameStats.setFill(Color.BLACK);
         statusLabel.setFont(new Font("Londrina Solid", 36));
@@ -213,7 +287,28 @@ public class GameScreen {
 //        StackPane.setAlignment(menuGroup, Pos.CENTER_RIGHT);
         StackPane.setAlignment(menuGroup, Pos.TOP_RIGHT);
         StackPane.setMargin(menuGroup, new Insets(105,30,0,0));
-        getCurrentDisplay().getChildren().add(menuGroup);
+        ObservableList<Node> kids = getCurrentDisplay().getChildren();
+        int chatIndex = kids.indexOf(chatBox.getRoot()); // add before chat box
+        kids.add(chatIndex, menuGroup);
+    }
+
+    public void showReplayPopUp() {
+        replayPopUp = CustomJavaFXElementsTools.createPopUp(
+                () -> {
+                    replayDeniedCallback.run();
+                    hideReplayPopUp();
+                },
+                replayAcceptedCallback,
+                this.opponentUsername + " has requested to rematch you! Do you accept?",
+                "No",
+                "Yes");
+        currentDisplay.getChildren().add(replayPopUp);
+    }
+
+    private void hideReplayPopUp() {
+        ObservableList<Node> kids = currentDisplay.getChildren();
+        kids.remove(replayPopUp);
+        this.replayPopUp = null;
     }
 
     public StackPane getCurrentDisplay() {
@@ -228,5 +323,46 @@ public class GameScreen {
         Text waiting = new Text("Waiting for opponent...");
         currentDisplay = new StackPane(waiting);
         StackPane.setAlignment(waiting, Pos.CENTER);
+    }
+
+    public void showMakeMoveButton() {
+        if (selectedCol == -1 || selectedRow == -1) return;
+        ObservableList<Node> kids = getCurrentDisplay().getChildren();
+        if (!kids.contains(makeMove)) {
+            // find where the chat box lives:
+            int chatIndex = kids.indexOf(chatBox.getRoot());
+            // insert the button just before it:
+            kids.add(chatIndex, makeMove);
+        }
+    }
+
+    public void hideMakeMoveButton() {
+        if (selectedCol != -1 || selectedRow != -1) return;
+        ObservableList<Node> kids = getCurrentDisplay().getChildren();
+        kids.remove(makeMove);
+    }
+
+    private void hidePopUp() {
+        ObservableList<Node> kids = getCurrentDisplay().getChildren();
+        kids.remove(quitPopUp);
+    }
+
+    private void showPopUp() {
+        ObservableList<Node> kids = getCurrentDisplay().getChildren();
+        if (!kids.contains(quitPopUp)) {
+            kids.add(quitPopUp);
+        }
+    }
+
+    private void hideQuitButton() {
+        ObservableList<Node> kids = getCurrentDisplay().getChildren();
+        kids.remove(quitButton);
+    }
+
+    private void showQuitButton() {
+        ObservableList<Node> kids = getCurrentDisplay().getChildren();
+        if (!kids.contains(quitButton)) {
+            kids.add(quitButton);
+        }
     }
 }
