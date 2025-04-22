@@ -1,6 +1,7 @@
 MessageClasses/WaitingInQueueMessage.class
 MessageClasses/Message.class
 GuiServer.class
+MessageClasses/ReplayResponse.class
 MessageClasses/Piece.class
 MessageClasses/LoginMessage.class
 MessageClasses/NewChatMessage.class
@@ -12,6 +13,8 @@ MessageClasses/LoginResponse.class
 GameSession.class
 MessageClasses/WinMessage.class
 Server$ClientThread.class
+MessageClasses/ChatMessage.class
+MessageClasses/ReplayRequest.class
 MessageClasses/NewGameResponse.class
 Server.class
 MessageClasses/BoardUpdate.class

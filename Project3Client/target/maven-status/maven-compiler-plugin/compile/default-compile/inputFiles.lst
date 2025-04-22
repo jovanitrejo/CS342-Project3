@@ -7,6 +7,7 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/utils/CustomJavaFXElementsTools.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/DrawMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/LoginResponse.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/ReplayResponse.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/Client.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/Scenes/ChatBox.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/LoginMessage.java
@@ -18,4 +19,6 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/NewGameResponse.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/BoardUpdate.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageDispatcher.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/ReplayRequest.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/ChatMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/Scenes/GameScreen.java

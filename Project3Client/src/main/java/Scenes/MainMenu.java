@@ -19,10 +19,10 @@ public class MainMenu {
         welcomeText.setAlignment(Pos.TOP_CENTER);
         welcomeText.setPadding(new Insets(65, 0, 0, 0));
 
-        Button findNewGameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Find New Game", 24);
+        Button findNewGameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Find New Game", 24, false);
         findNewGameButton.setOnAction(e -> findNewGameCallback.accept(true));
 
-        Button changeUsernameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#656565", Color.WHITE, "Change Username", 24);
+        Button changeUsernameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#656565", Color.WHITE, "Change Username", 24, false);
         changeUsernameButton.setOnAction(e -> changeUsernameCallback.accept(true));
 
         VBox options = new VBox(20, findNewGameButton, changeUsernameButton);
