@@ -1,6 +1,7 @@
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 import MessageClasses.*;
 import javafx.application.Application;
@@ -31,6 +32,10 @@ public class GuiServer extends Application{
 		// Handle Login Requests on the server
 		dispatcher.registerHandler(LoginMessage.class, (loginMessage, clientThread) -> {
 			System.out.println("Got a request from the client");
+			if (Objects.equals(loginMessage.getUsername(), "") || loginMessage.getUsername().contains(" ")) {
+				clientThread.sendMessage(new LoginResponse(false, "Username cannot be empty or contain spaces!"));
+				return;
+			}
 			for(Server.ClientThread client : serverConnection.clients) {
 				if (client.isAuthorized() && (client.getUsername().equals(loginMessage.getUsername()))) {
 					if (client == clientThread) {
@@ -76,7 +81,6 @@ public class GuiServer extends Application{
 				Server.ClientThread opponent = serverConnection.waitingForGame.get(0);
 				serverConnection.waitingForGame.remove(opponent);
 				Thread newGame = getThread(opponent, clientThread);
-
 				synchronized(activeGames) {
 					activeGames.add(newGame);
 				}
@@ -108,6 +112,43 @@ public class GuiServer extends Application{
 			currentGame.player2.sendMessage(new QuitMessage());
 			// End game thread.
 			currentGame.endGame();
+		}));
+
+		// Handling replay request
+		dispatcher.registerHandler(ReplayRequest.class, ((replayRequest, clientThread) -> {
+			if (clientThread.activeGame != null) {
+				Server.ClientThread opponent = Objects.equals(clientThread.activeGame.player1.getUsername(), clientThread.getUsername()) ? clientThread.activeGame.player2 : clientThread.activeGame.player1;
+				opponent.sendMessage(new ReplayRequest(clientThread.getUsername()));
+			}
+		}));
+
+		// Handling replay response
+		dispatcher.registerHandler(ReplayResponse.class, ((replayResponse, clientThread) -> {
+			if (clientThread.activeGame != null) {
+                Server.ClientThread opponent = Objects.equals(clientThread.activeGame.player1.getUsername(), clientThread.getUsername()) ? clientThread.activeGame.player2 : clientThread.activeGame.player1;
+                if (!replayResponse.isAccepted()) {
+                    opponent.sendMessage(new ReplayResponse(replayResponse.isAccepted()));
+				} else {
+					// End the current game and create a new one for the two users to play.
+					GameSession currentGame = clientThread.activeGame;
+					if (currentGame == null) return;
+					currentGame.endGame();
+					Thread newGame = getThread(opponent, clientThread);
+					synchronized(activeGames) {
+						activeGames.add(newGame);
+					}
+					newGame.start();
+                }
+			}
+		}));
+
+		// Handling sending a new chat message
+		dispatcher.registerHandler(ChatMessage.class, ((chatMessage, clientThread) -> {
+			if (clientThread.activeGame == null) return;
+			GameSession activeGame = clientThread.activeGame;
+			activeGame.chat.add(clientThread.getUsername() + ": " + chatMessage.getMessage());
+			Server.ClientThread opponent = clientThread == activeGame.player1 ? activeGame.player2 : activeGame.player1;
+			opponent.sendMessage(new ChatMessage(chatMessage.getMessage()));
 		}));
 
 		
