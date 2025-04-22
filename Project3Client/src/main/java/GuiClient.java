@@ -19,20 +19,27 @@ public class GuiClient extends Application{
 	StackPane root = new StackPane();
 	Pane currentGUI = new Pane();
 	Client clientConnection;
-	LoginScreen loginScreen = new LoginScreen(username -> clientConnection.send(new LoginMessage(username)));
+	LoginScreen loginScreen;
 	MainMenu mainMenu = new MainMenu(findNewGame -> clientConnection.send(new NewGameMessage()), changeUsername -> Platform.runLater(() -> {
         root.getChildren().remove(currentGUI);
         currentGUI = loginScreen.getRoot();
         root.getChildren().add(currentGUI);
     }));
-	GameScreen gameScreen = new GameScreen(((row, col) -> clientConnection.send(new MoveMessage(row, col))), (() -> {
-		clientConnection.send(new QuitMessage());
-		Platform.runLater(() -> {
-			root.getChildren().remove(currentGUI);
-			currentGUI = mainMenu.getRoot();
-			root.getChildren().add(currentGUI);
-		});
-	}));
+	GameScreen gameScreen = new GameScreen(
+			(row, col) -> clientConnection.send(new MoveMessage(row, col)),
+			() -> {
+				clientConnection.send(new QuitMessage());
+				Platform.runLater(() -> {
+					root.getChildren().remove(currentGUI);
+					currentGUI = mainMenu.getRoot();
+					root.getChildren().add(currentGUI);
+				});
+			},
+			() -> clientConnection.send(new ReplayRequest()),
+			() -> clientConnection.send(new ReplayResponse(true)),
+			() -> clientConnection.send(new ReplayResponse(false)),
+			(message) -> clientConnection.send(new ChatMessage(message))
+	);
 
 	MessageDispatcher messageDispatcher = new MessageDispatcher();
 	
@@ -47,7 +54,10 @@ public class GuiClient extends Application{
 		ImageView imageBackground = new ImageView(new Image("Game_Background.png"));
 		imageBackground.setFitWidth(1280);
 		imageBackground.setFitHeight(720);
-		imageBackground.setPreserveRatio(true);
+		imageBackground.setPreserveRatio(false);
+
+		// Initialize login screen
+		loginScreen = new LoginScreen(username -> clientConnection.send(new LoginMessage(username)));
 
 		currentGUI = loginScreen.getRoot();
 
@@ -66,6 +76,7 @@ public class GuiClient extends Application{
 					root.getChildren().remove(currentGUI);
 					currentGUI = mainMenu.getRoot();
 					root.getChildren().add(currentGUI);
+					loginScreen.setWarningLabel("");
 				});
 			}
 		});
@@ -103,7 +114,7 @@ public class GuiClient extends Application{
 			gameScreen.state.setIsYourTurn(false);
 			Platform.runLater(() -> {
 				gameScreen.highlightWinningPieces(winMessage.getWinningPieces());
-				gameScreen.showGameEnded(false, winMessage.didIWin());
+				gameScreen.showGameEnded(false, winMessage.didIWin(), winMessage.getLengthInMinutes(), winMessage.getTotalMoves(), winMessage.getWinType());
 			});
 		}));
 
@@ -119,8 +130,28 @@ public class GuiClient extends Application{
 		}));
 
 		// Creating handler for handling a draw game
-		messageDispatcher.registerHandler(DrawMessage.class, (drawMessage -> Platform.runLater(() -> gameScreen.showGameEnded(true, false))));
+		messageDispatcher.registerHandler(DrawMessage.class, (drawMessage -> Platform.runLater(() -> gameScreen.showGameEnded(true, false, drawMessage.getLengthInMinutes(), drawMessage.getTotalMoves(), "None"))));
 
+		// Creating handler for handling a replay request
+		messageDispatcher.registerHandler(ReplayRequest.class, (replayRequest -> Platform.runLater(() -> gameScreen.showReplayPopUp())));
+
+		// Creating handler for handling a replay response
+		messageDispatcher.registerHandler(ReplayResponse.class, (replayResponse -> {
+			if (!replayResponse.isAccepted()) {
+				Platform.runLater(() -> {
+					gameScreen.replayButton.setText("Replay");
+					gameScreen.replayButton.setDisable(false);
+				});
+			}
+		}));
+
+		// Creating a handler for getting a new chat-message in game
+		messageDispatcher.registerHandler(ChatMessage.class, (chatMessage -> {
+			System.out.println("Got a new chat from opponent!");
+			if (gameScreen.state == null) return;
+			System.out.println("Adding new chat to chat box...");
+			gameScreen.chatBox.addOpponentMessage(chatMessage.getMessage(), gameScreen.opponentUsername);
+		}));
 							
 		clientConnection.start();
 
@@ -137,7 +168,6 @@ public class GuiClient extends Application{
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Client");
 		primaryStage.show();
-		
 	}
 
 }
