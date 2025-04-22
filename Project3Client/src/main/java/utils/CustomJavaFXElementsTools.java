@@ -1,10 +1,11 @@
 package utils;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
@@ -45,11 +46,24 @@ public class CustomJavaFXElementsTools {
         return tf;
     }
 
-    public static Button createStyledButton(int width, int height, String backgroundColorHex, Color textColor, String buttonText, int fontSize) {
+    public static Button createStyledButton(int width, int height, String backgroundColorHex, Color textColor, String buttonText, int fontSize, boolean addStroke) {
         Button customButton = new Button(buttonText);
         customButton.setMaxWidth(width);
         customButton.setMaxHeight(height);
         customButton.setTextFill(textColor);
+
+        if (addStroke) {
+            // Stroke effect on the text.
+            Text txt = new Text(buttonText);
+            txt.setFont(Font.font(fontSize));
+            txt.setFill(textColor);           // interior color
+            txt.setStroke(Color.BLACK);       // outline color
+            txt.setStrokeWidth(1);            // outline thickness
+
+            // tell the Button to show *only* our graphic
+            customButton.setGraphic(txt);
+            customButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        }
 
         String hoverColor = darkenHexColor(backgroundColorHex, 0.8); // 80% brightness
 
@@ -89,6 +103,37 @@ public class CustomJavaFXElementsTools {
 
     private static int clamp(int value) {
         return Math.max(0, Math.min(255, value));
+    }
+
+    public static VBox createPopUp(Runnable button1Callback, Runnable button2Callback, String popupText, String button1Text, String button2Text) {
+        Text message = new Text(popupText);
+        message.setFont(Font.font("Londrina Solid", 60));
+        message.setStroke(Color.BLACK);
+        message.setStrokeWidth(1);
+        message.setTextAlignment(TextAlignment.CENTER);
+
+        Button button1 = createStyledButton(175, 50, "#FF0000", Color.WHITE, button1Text, 24, true);
+        button1.setOnAction(e -> button1Callback.run());
+        Button button2 = createStyledButton(175, 50, "#1DFA00", Color.WHITE, button2Text, 24, true);
+        button2.setOnAction(e -> button2Callback.run());
+
+        HBox buttonOptions = new HBox(50, button1, button2);
+        VBox popUp = new VBox(message, buttonOptions);
+        popUp.setMaxSize(600, 400);
+        popUp.setPrefSize(600, 400);
+        popUp.setBackground(new Background(
+                new BackgroundFill(
+                        // semi‑transparent gray (75% opacity)
+                        Color.web("#7D7D7D", 0.75),
+                        // 10 px corner radius on all corners
+                        new CornerRadii(15),
+                        // no additional insets
+                        Insets.EMPTY
+                )
+        ));
+        popUp.setStyle("-fx-border-color: black; -fx-border-radius: 15");
+
+        return popUp;
     }
 
 }
