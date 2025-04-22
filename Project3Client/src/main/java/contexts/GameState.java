@@ -49,7 +49,7 @@ public class GameState {
      * Find the first empty slot from the bottom in this column.
      * @throws IllegalArgumentException if the column is full.
      */
-    private int findFreeRow(int column) {
+    public int findFreeRow(int column) {
         for (int r = gameBoard.length - 1; r >= 0; r--) {
             if (gameBoard[r][column] == Piece.EMPTY) {
                 return r;
