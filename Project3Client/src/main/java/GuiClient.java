@@ -10,9 +10,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class GuiClient extends Application{
@@ -40,6 +43,7 @@ public class GuiClient extends Application{
 			() -> clientConnection.send(new ReplayResponse(false)),
 			(message) -> clientConnection.send(new ChatMessage(message))
 	);
+	private String username;
 
 	MessageDispatcher messageDispatcher = new MessageDispatcher();
 	
@@ -71,6 +75,7 @@ public class GuiClient extends Application{
 				Platform.runLater(() -> loginScreen.setWarningLabel(message.getDescription()));
 			} else {
 				System.out.print("Logged in!");
+				username = loginScreen.userNameTextField.getText();
 				Platform.runLater(() -> {
 					// Move user to the main menu on successful login
 					root.getChildren().remove(currentGUI);
@@ -145,12 +150,15 @@ public class GuiClient extends Application{
 			}
 		}));
 
+		// Creating handler for updating the list of available users
+		messageDispatcher.registerHandler(AvailableUsersMessage.class, (availableUsersMessage -> Platform.runLater(() -> updateActiveUsers(availableUsersMessage.getActiveUsers()))));
+
 		// Creating a handler for getting a new chat-message in game
 		messageDispatcher.registerHandler(ChatMessage.class, (chatMessage -> {
 			System.out.println("Got a new chat from opponent!");
 			if (gameScreen.state == null) return;
 			System.out.println("Adding new chat to chat box...");
-			gameScreen.chatBox.addOpponentMessage(chatMessage.getMessage(), gameScreen.opponentUsername);
+			Platform.runLater(() -> gameScreen.chatBox.addOpponentMessage(chatMessage.getMessage(), gameScreen.opponentUsername));
 		}));
 							
 		clientConnection.start();
@@ -168,6 +176,22 @@ public class GuiClient extends Application{
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Client");
 		primaryStage.show();
+	}
+
+	public void updateActiveUsers(ArrayList<String> usernames) {
+		// Remove the existing list of users
+		mainMenu.onlineUsersList.getChildren().clear();
+
+		// Add full-list of current users to list
+		for(String username : usernames) {
+			if (!Objects.equals(username, this.username)) {
+				Text usernameText = new Text(username);
+				usernameText.setFont(Font.font("Londrina Solid", 20));
+				usernameText.setStroke(Color.BLACK);
+				usernameText.setStrokeWidth(1);
+				mainMenu.onlineUsersList.getChildren().add(usernameText);
+			}
+		}
 	}
 
 }
