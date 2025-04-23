@@ -99,7 +99,7 @@ public class ChatBox {
     public void addOpponentMessage(String message, String opponentUsername) {
         if (message.isEmpty()) return;
         System.out.println("Opponent said: " + message);
-        Platform.runLater(() -> addMessage(opponentUsername, message, opponentColor));
+        addMessage(opponentUsername, message, opponentColor);
     }
 
 
