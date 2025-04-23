@@ -111,6 +111,8 @@ public class CustomJavaFXElementsTools {
         message.setStroke(Color.BLACK);
         message.setStrokeWidth(1);
         message.setTextAlignment(TextAlignment.CENTER);
+        message.setFill(Color.WHITE);
+        message.setWrappingWidth(590);
 
         Button button1 = createStyledButton(175, 50, "#FF0000", Color.WHITE, button1Text, 24, true);
         button1.setOnAction(e -> button1Callback.run());
@@ -119,6 +121,17 @@ public class CustomJavaFXElementsTools {
 
         HBox buttonOptions = new HBox(50, button1, button2);
         VBox popUp = new VBox(message, buttonOptions);
+
+        //buttons positioning and size
+        button1.setTextAlignment(TextAlignment.CENTER);
+        button2.setTextAlignment(TextAlignment.CENTER);
+        button1.setPrefSize(175,50);
+        button2.setPrefSize(175,50);
+
+        //popUp positioning and size
+        popUp.setSpacing(55);
+        popUp.setAlignment(Pos.CENTER);
+        buttonOptions.setAlignment(Pos.CENTER);
         popUp.setMaxSize(600, 400);
         popUp.setPrefSize(600, 400);
         popUp.setBackground(new Background(
