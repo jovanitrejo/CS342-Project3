@@ -20,7 +20,6 @@ public class GuiServer extends Application{
 	final ArrayList<Thread> activeGames = new ArrayList<>();
 	ListView<String> listItems;
 	
-	
 	public static void main(String[] args) {
 		launch(args);
 	}
@@ -67,6 +66,8 @@ public class GuiServer extends Application{
 					clientThread.sendMessage(new LoginResponse(true, "You are now authorized. Welcome " + loginMessage.getUsername() + "!"));
 					Platform.runLater(() -> listItems.getItems().add("The server set client #" + clientThread.count + "'s username to " + loginMessage.getUsername() + " and is now authorized."));
 				}
+				// Notify all users of new active clients
+				sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
 			} catch (Exception e) {
 				Platform.runLater(() -> listItems.getItems().add("Error occurred when sending MessageClasses.LoginResponse to client #" + clientThread.count));
 			}
@@ -84,6 +85,8 @@ public class GuiServer extends Application{
 				synchronized(activeGames) {
 					activeGames.add(newGame);
 				}
+				// Send clients the new list of available users since some left.
+				sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
 				newGame.start();
 			} else {
 				Platform.runLater(() -> listItems.getItems().add("A player wants to play, need to find an opponent..."));
@@ -110,6 +113,8 @@ public class GuiServer extends Application{
 			// Send QuitMessage to both players
 			currentGame.player1.sendMessage(new QuitMessage());
 			currentGame.player2.sendMessage(new QuitMessage());
+			// Send clients the new list of available users since some left.
+			sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
 			// End game thread.
 			currentGame.endGame();
 		}));
@@ -184,6 +189,8 @@ public class GuiServer extends Application{
                 Platform.runLater(() ->
                         listItems.getItems().add("Game ended: " + Thread.currentThread().getName())
                 );
+				// Send clients the new list of available users since some left.
+				sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
             }
         }, "GameSession-" + clientThread.count + "-" + opponent.count);
 	}
@@ -197,5 +204,23 @@ public class GuiServer extends Application{
 		pane.setCenter(listItems);
 		pane.setStyle("-fx-font-family: 'serif'");
 		return new Scene(pane, 500, 400);
+	}
+
+	private ArrayList<String> getAvailableUsers() {
+		ArrayList<String> availableUsers = new ArrayList<>();
+		for (Server.ClientThread client : serverConnection.clients) {
+			if (client.isAuthorized() && client.activeGame == null) {
+				availableUsers.add(client.getUsername());
+			}
+		}
+		return availableUsers;
+	}
+
+	private void sendToAllAuthorizedUsers(Message message) {
+		for (Server.ClientThread client : serverConnection.clients) {
+			if (client.isAuthorized()) {
+				client.sendMessage(message);
+			}
+		}
 	}
 }
