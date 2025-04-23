@@ -54,7 +54,7 @@ public class ChatBox {
         sendButton.setOnAction(e -> onSend(textBox, myColor));
         inputBox = new HBox(8, textBox, sendButton);
         inputBox.setPadding(new Insets(8));
-        inputBox.setAlignment(Pos.CENTER_LEFT);
+        inputBox.setAlignment(Pos.CENTER);
 
         // 4) assemble
         container = new VBox(header, scrollPane, inputBox);
@@ -62,6 +62,24 @@ public class ChatBox {
         container.setMaxWidth(450);
         container.setPrefHeight(500);
         container.setMaxHeight(500);
+
+        //styles
+        toggleButton.setStyle("-fx-background-color: #242323; -fx-border-radius: 0px; -fx-text-fill: #585757; -fx-font-size: 24px");
+        headerLabel.setTextFill(Color.WHITE);
+        headerLabel.setStyle("-fx-font-size: 24px;");
+        headerLabel.setPadding(new Insets(8,0,0,3));
+        scrollPane.setStyle("-fx-background-color: rgba(47, 47, 47, 0.7);");
+        scrollPane.getStyleClass().add("scrollPane");
+        scrollPane.getStylesheets().add("path/stylesheet.css");
+
+        container.setStyle("-fx-background-color: rgba(39, 38, 38, 0.6);");
+        chatBox.setStyle("-fx-background-color: transparent;");
+        spacer.setStyle("-fx-background-color: rgba(47, 47, 47, 0.7);");
+
+        textBox.setPrefWidth(335);
+        textBox.setPrefHeight(52);
+        textBox.setStyle("-fx-background-radius: 15px");
+        sendButton.setStyle("-fx-background-color: #00AEFF; -fx-background-radius: 15px;");
     }
 
     public VBox getRoot() {
