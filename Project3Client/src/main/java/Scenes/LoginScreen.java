@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 
 public class LoginScreen {
     StackPane root;
-    TextField userNameTextField = CustomJavaFXElementsTools.createCustomTextField("Enter a username");
+    public TextField userNameTextField = CustomJavaFXElementsTools.createCustomTextField("Enter a username");
     Label warningLabel = new Label();
     Consumer<String> callback;
     public LoginScreen(Consumer<String> callback) {
@@ -23,7 +23,6 @@ public class LoginScreen {
         userNameTextField.setOnAction(e -> {
             System.out.println("Trying to send new username to server...");
             callback.accept(userNameTextField.getText());
-            userNameTextField.clear();
         });
 
         // Title Label
