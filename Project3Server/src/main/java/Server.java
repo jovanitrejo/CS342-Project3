@@ -18,9 +18,11 @@ public class Server{
 	ArrayList<ClientThread> waitingForGame = new ArrayList<>();
 	private final MessageDispatcher dispatcher;
 	private final Consumer<String> guiLogger;
+	private final Runnable updateClientsCallback;
 
 
-	Server(MessageDispatcher dispatcher, Consumer<String> logger){
+	Server(MessageDispatcher dispatcher, Consumer<String> logger, Runnable updateClientsCallback){
+		this.updateClientsCallback = updateClientsCallback;
 		this.dispatcher = dispatcher;
 		this.guiLogger = logger;
 		server = new TheServer();
@@ -88,9 +90,9 @@ public class Server{
 					    	dispatcher.dispatch(data, this);
 					    	}
 					    catch(Exception e) {
-					    	guiLogger.accept("Oops...Something wrong with the socket from client: " + count + "....closing down!");
 					    	clients.remove(this);
-                            waitingForGame.remove(this);
+							guiLogger.accept("Oops...Something wrong with the socket from client: " + count + "....closing down!");
+							waitingForGame.remove(this);
 							if (this.activeGame != null) {
 								// Shuts down an active game if there is one. Sends the other player back to the main menu.
 								Platform.runLater(() -> guiLogger.accept("User quit while playing an active game! Sending quit message to other player..."));
@@ -100,6 +102,7 @@ public class Server{
 								opponent.activeGame = null;
 								opponent.sendMessage(new QuitMessage());
 							}
+							updateClientsCallback.run();
 							break;
 					    }
 					}
