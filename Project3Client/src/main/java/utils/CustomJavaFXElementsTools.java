@@ -145,7 +145,43 @@ public class CustomJavaFXElementsTools {
                 )
         ));
         popUp.setStyle("-fx-border-color: black; -fx-border-radius: 15");
+        return popUp;
+    }
 
+    public static VBox createNotification(Runnable buttonCallback, String popupText) {
+        Text notification = new Text(popupText);
+        notification.setFont(Font.font("Londrina Solid", 60));
+        notification.setStroke(Color.BLACK);
+        notification.setStrokeWidth(1);
+        notification.setTextAlignment(TextAlignment.CENTER);
+        notification.setFill(Color.WHITE);
+        notification.setWrappingWidth(590);
+
+        Button button = createStyledButton(175, 50, "#FF0000", Color.WHITE, "Okay", 24, true);
+        button.setOnAction(e -> buttonCallback.run());
+
+        VBox popUp = new VBox(notification, button);
+
+        //buttons positioning and size
+        button.setTextAlignment(TextAlignment.CENTER);
+        button.setPrefSize(175,50);
+
+        //popUp positioning and size
+        popUp.setSpacing(55);
+        popUp.setAlignment(Pos.CENTER);
+        popUp.setMaxSize(600, 400);
+        popUp.setPrefSize(600, 400);
+        popUp.setBackground(new Background(
+                new BackgroundFill(
+                        // semi‑transparent gray (75% opacity)
+                        Color.web("#7D7D7D", 0.75),
+                        // 10 px corner radius on all corners
+                        new CornerRadii(15),
+                        // no additional insets
+                        Insets.EMPTY
+                )
+        ));
+        popUp.setStyle("-fx-border-color: black; -fx-border-radius: 15");
         return popUp;
     }
 
