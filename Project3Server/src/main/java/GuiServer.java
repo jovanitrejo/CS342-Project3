@@ -2,7 +2,6 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
-
 import MessageClasses.*;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -26,7 +25,7 @@ public class GuiServer extends Application{
 
 	@Override
 	public void start(Stage primaryStage) {
-		serverConnection = new Server(dispatcher, data -> Platform.runLater(()-> listItems.getItems().add(data)));
+		serverConnection = new Server(dispatcher, data -> Platform.runLater(()-> listItems.getItems().add(data)), () -> sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers())));
 
 		// Handle Login Requests on the server
 		dispatcher.registerHandler(LoginMessage.class, (loginMessage, clientThread) -> {
@@ -156,6 +155,50 @@ public class GuiServer extends Application{
 			opponent.sendMessage(new ChatMessage(chatMessage.getMessage()));
 		}));
 
+		// Handling sending invites to users
+		dispatcher.registerHandler(InviteUserMessage.class, ((inviteUserMessage, clientThread) -> {
+			for (Server.ClientThread client : serverConnection.clients) {
+				if (client.activeGame == null && client.isAuthorized()) {
+					if (Objects.equals(client.getUsername(), inviteUserMessage.getUsername())) {
+						client.sendMessage(new InviteUserMessage(clientThread.getUsername()));
+					}
+				}
+			}
+		}));
+
+		// Handling when a user accepts an invitation
+		dispatcher.registerHandler(InviteAcceptedMessage.class, (inviteAcceptedMessage, clientThread) -> {
+			for (Server.ClientThread client : serverConnection.clients) {
+				if (client.activeGame == null && client.isAuthorized()) {
+					if (Objects.equals(client.getUsername(), inviteAcceptedMessage.getOpponent())) {
+						Thread newGame = getThread(client, clientThread);
+						synchronized(activeGames) {
+							activeGames.add(newGame);
+						}
+						newGame.start();
+						return;
+					}
+				} else if (client.activeGame != null && client.isAuthorized()) {
+					if (Objects.equals(client.getUsername(), inviteAcceptedMessage.getOpponent())) {
+						clientThread.sendMessage(new UserAlreadyInGameMessage());
+						return;
+					}
+				}
+			}
+		});
+
+		// Handling when a user denies an invitation
+		dispatcher.registerHandler(InviteDeniedMessage.class, ((inviteDeniedMessage, clientThread) -> {
+			for (Server.ClientThread client : serverConnection.clients) {
+				if (client.activeGame == null && client.isAuthorized()) {
+					if (Objects.equals(client.getUsername(), inviteDeniedMessage.getOpponent())) {
+						client.sendMessage(new InviteDeniedMessage(clientThread.getUsername()));
+						return;
+					}
+				}
+			}
+		}));
+
 		
 		listItems = new ListView<>();
 
@@ -178,6 +221,7 @@ public class GuiServer extends Application{
 		GameSession session = new GameSession(clientThread, opponent);
 		clientThread.activeGame = session;
 		opponent.activeGame = session;
+		sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
         return new Thread(() -> {
             try {
                 session.run();

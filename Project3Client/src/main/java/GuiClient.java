@@ -10,24 +10,27 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.stage.Stage;
-
-import java.util.ArrayList;
 import java.util.Objects;
 
 public class GuiClient extends Application{
+	private String username;
 	StackPane root = new StackPane();
 	Pane currentGUI = new Pane();
 	Client clientConnection;
 	LoginScreen loginScreen;
-	MainMenu mainMenu = new MainMenu(findNewGame -> clientConnection.send(new NewGameMessage()), changeUsername -> Platform.runLater(() -> {
+	MainMenu mainMenu = new MainMenu(
+			findNewGame -> clientConnection.send(new NewGameMessage()),
+			changeUsername -> Platform.runLater(() -> {
         root.getChildren().remove(currentGUI);
         currentGUI = loginScreen.getRoot();
         root.getChildren().add(currentGUI);
-    }));
+    }),
+			(opponent) -> clientConnection.send(new InviteAcceptedMessage(opponent)),
+			(opponent) -> clientConnection.send(new InviteDeniedMessage(opponent)),
+			(opponent) -> clientConnection.send(new InviteUserMessage(opponent))
+			);
 	GameScreen gameScreen = new GameScreen(
 			(row, col) -> clientConnection.send(new MoveMessage(row, col)),
 			() -> {
@@ -43,7 +46,6 @@ public class GuiClient extends Application{
 			() -> clientConnection.send(new ReplayResponse(false)),
 			(message) -> clientConnection.send(new ChatMessage(message))
 	);
-	private String username;
 
 	MessageDispatcher messageDispatcher = new MessageDispatcher();
 	
@@ -151,7 +153,7 @@ public class GuiClient extends Application{
 		}));
 
 		// Creating handler for updating the list of available users
-		messageDispatcher.registerHandler(AvailableUsersMessage.class, (availableUsersMessage -> Platform.runLater(() -> updateActiveUsers(availableUsersMessage.getActiveUsers()))));
+		messageDispatcher.registerHandler(AvailableUsersMessage.class, (availableUsersMessage -> Platform.runLater(() -> mainMenu.updateActiveUsers(availableUsersMessage.getActiveUsers(), username))));
 
 		// Creating a handler for getting a new chat-message in game
 		messageDispatcher.registerHandler(ChatMessage.class, (chatMessage -> {
@@ -160,7 +162,16 @@ public class GuiClient extends Application{
 			System.out.println("Adding new chat to chat box...");
 			Platform.runLater(() -> gameScreen.chatBox.addOpponentMessage(chatMessage.getMessage(), gameScreen.opponentUsername));
 		}));
-							
+
+		// Creating a handler for getting an invitation to play a new game
+		messageDispatcher.registerHandler(InviteUserMessage.class, (inviteUserMessage -> Platform.runLater(() -> mainMenu.showInvitePopup(inviteUserMessage.getUsername()))));
+
+		// Creating a handler for when a user denies the invitation
+		messageDispatcher.registerHandler(InviteDeniedMessage.class, (inviteDeniedMessage -> Platform.runLater(() -> mainMenu.reEnableInviteButton(inviteDeniedMessage.getOpponent()))));
+
+		// Creating a handler for when a user tries to accept an invitation but the requestor joined a different one
+		messageDispatcher.registerHandler(UserAlreadyInGameMessage.class, (userAlreadyInGameMessage -> Platform.runLater(() -> mainMenu.showRequestorIsAlreadyInGame())));
+
 		clientConnection.start();
 
 		primaryStage.setOnCloseRequest(t -> {
@@ -176,22 +187,6 @@ public class GuiClient extends Application{
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Client");
 		primaryStage.show();
-	}
-
-	public void updateActiveUsers(ArrayList<String> usernames) {
-		// Remove the existing list of users
-		mainMenu.onlineUsersList.getChildren().clear();
-
-		// Add full-list of current users to list
-		for(String username : usernames) {
-			if (!Objects.equals(username, this.username)) {
-				Text usernameText = new Text(username);
-				usernameText.setFont(Font.font("Londrina Solid", 20));
-				usernameText.setStroke(Color.BLACK);
-				usernameText.setStrokeWidth(1);
-				mainMenu.onlineUsersList.getChildren().add(usernameText);
-			}
-		}
 	}
 
 }
