@@ -1,6 +1,7 @@
 
 import MessageClasses.*;
 import Scenes.GameScreen;
+import Scenes.LobbyScreen;
 import Scenes.LoginScreen;
 import Scenes.MainMenu;
 import javafx.application.Application;
@@ -19,33 +20,59 @@ public class GuiClient extends Application{
 	StackPane root = new StackPane();
 	Pane currentGUI = new Pane();
 	Client clientConnection;
+
 	LoginScreen loginScreen;
-	MainMenu mainMenu = new MainMenu(
-			findNewGame -> clientConnection.send(new NewGameMessage()),
-			changeUsername -> Platform.runLater(() -> {
-        root.getChildren().remove(currentGUI);
-        currentGUI = loginScreen.getRoot();
-        root.getChildren().add(currentGUI);
-    }),
-			(opponent) -> clientConnection.send(new InviteAcceptedMessage(opponent)),
-			(opponent) -> clientConnection.send(new InviteDeniedMessage(opponent)),
-			(opponent) -> clientConnection.send(new InviteUserMessage(opponent))
-			);
-	GameScreen gameScreen = new GameScreen(
-			(row, col) -> clientConnection.send(new MoveMessage(row, col)),
-			() -> {
-				clientConnection.send(new QuitMessage());
-				Platform.runLater(() -> {
+	MainMenu mainMenu;
+	GameScreen gameScreen;
+	LobbyScreen lobbyScreen;
+
+	public void setupScreens() {
+		loginScreen = new LoginScreen((username) -> clientConnection.send(new LoginMessage(username)));
+
+		mainMenu = new MainMenu(
+				findNewGame -> clientConnection.send(new NewGameMessage()),
+				changeUsername -> Platform.runLater(() -> {
 					root.getChildren().remove(currentGUI);
-					currentGUI = mainMenu.getRoot();
+					currentGUI = loginScreen.getRoot();
 					root.getChildren().add(currentGUI);
-				});
-			},
-			() -> clientConnection.send(new ReplayRequest()),
-			() -> clientConnection.send(new ReplayResponse(true)),
-			() -> clientConnection.send(new ReplayResponse(false)),
-			(message) -> clientConnection.send(new ChatMessage(message))
-	);
+				}),
+				(opponent) -> clientConnection.send(new InviteAcceptedMessage(opponent)),
+				(opponent) -> clientConnection.send(new InviteDeniedMessage(opponent)),
+				(opponent) -> clientConnection.send(new InviteUserMessage(opponent)),
+				() -> Platform.runLater(() -> {
+					root.getChildren().remove(currentGUI);
+					currentGUI = lobbyScreen.getRoot();  // lobbyScreen is now safely initialized
+					root.getChildren().add(currentGUI);
+				})
+		);
+
+		gameScreen = new GameScreen(
+				(row, col) -> clientConnection.send(new MoveMessage(row, col)),
+				() -> {
+					clientConnection.send(new QuitMessage());
+					Platform.runLater(() -> {
+						root.getChildren().remove(currentGUI);
+						currentGUI = mainMenu.getRoot();
+						root.getChildren().add(currentGUI);
+					});
+				},
+				() -> clientConnection.send(new ReplayRequest()),
+				() -> clientConnection.send(new ReplayResponse(true)),
+				() -> clientConnection.send(new ReplayResponse(false)),
+				(message) -> clientConnection.send(new ChatMessage(message))
+		);
+
+		lobbyScreen = new LobbyScreen(
+				() -> Platform.runLater(() -> {
+					root.getChildren().remove(currentGUI);
+					currentGUI = mainMenu.getRoot(); // safe to reference now
+					root.getChildren().add(currentGUI);
+				}),
+				(opponentUsername) -> clientConnection.send(new InviteAcceptedMessage(opponentUsername)),
+				() -> clientConnection.send(new UserLobbyUpdateMessage(true)),
+				() -> clientConnection.send(new UserLobbyUpdateMessage(false))
+		);
+	}
 
 	MessageDispatcher messageDispatcher = new MessageDispatcher();
 	
@@ -56,6 +83,7 @@ public class GuiClient extends Application{
 	@Override
 	public void start(Stage primaryStage) {
 		// Initialize background image, fonts, and styles
+		setupScreens();
 		Font.loadFont(getClass().getResourceAsStream("/fonts/Londrina_Solid/LondrinaSolid-Regular.ttf"), 18);
 		ImageView imageBackground = new ImageView(new Image("Game_Background.png"));
 		imageBackground.setFitWidth(1280);
@@ -90,6 +118,10 @@ public class GuiClient extends Application{
 
 		// Creating handler for new game response
 		messageDispatcher.registerHandler(NewGameResponse.class, (NewGameResponse message) -> Platform.runLater(() -> {
+			// leave the lobby if in it
+			if (lobbyScreen.inLobby) {
+				lobbyScreen.leaveLobby();
+			}
 			gameScreen.startNewGame(message.getOpponentUsername(), message.amIRed(), message.isItMyTurn(), message.getPlayerSlot());
 			root.getChildren().remove(currentGUI);
             currentGUI = gameScreen.getCurrentDisplay();
@@ -171,6 +203,18 @@ public class GuiClient extends Application{
 
 		// Creating a handler for when a user tries to accept an invitation but the requestor joined a different one
 		messageDispatcher.registerHandler(UserAlreadyInGameMessage.class, (userAlreadyInGameMessage -> Platform.runLater(() -> mainMenu.showRequestorIsAlreadyInGame())));
+
+		// Creating a handler for when a user joins or leaves the lobby
+		messageDispatcher.registerHandler(UpdateLobbyMessage.class, (updateLobbyMessage -> {
+			System.out.println("The lobby has been updated!");
+			Platform.runLater(() -> {
+				if (updateLobbyMessage.isJoinedLobby()) {
+					lobbyScreen.addToLobbyScreen(updateLobbyMessage.getUser());
+				} else {
+					lobbyScreen.removeFromLobbyScreen(updateLobbyMessage.getUser());
+				}
+			});
+		}));
 
 		clientConnection.start();
 

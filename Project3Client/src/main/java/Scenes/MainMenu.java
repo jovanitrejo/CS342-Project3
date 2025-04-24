@@ -27,7 +27,7 @@ public class MainMenu {
     private final ArrayList<VBox> activeInvitePopUps = new ArrayList<>();
     private final ArrayList<String> pendingInvites = new ArrayList<>();
 
-    public MainMenu(Consumer<Boolean> findNewGameCallback, Consumer<Boolean> changeUsernameCallback, Consumer<String> inviteAcceptedCallback, Consumer<String> inviteDeniedCallback, Consumer<String> inviteUserCallback) {
+    public MainMenu(Consumer<Boolean> findNewGameCallback, Consumer<Boolean> changeUsernameCallback, Consumer<String> inviteAcceptedCallback, Consumer<String> inviteDeniedCallback, Consumer<String> inviteUserCallback, Runnable joinFromLobbyCallback) {
         this.inviteAcceptedCallback = inviteAcceptedCallback;
         this.inviteDeniedCallback = inviteDeniedCallback;
         this.inviteUserCallback = inviteUserCallback;
@@ -39,10 +39,13 @@ public class MainMenu {
         Button findNewGameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Find New Game", 24, false);
         findNewGameButton.setOnAction(e -> findNewGameCallback.accept(true));
 
+        Button joinFromLobbyButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Join from lobby", 24, false);
+        joinFromLobbyButton.setOnAction(e -> joinFromLobbyCallback.run());
+
         Button changeUsernameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#656565", Color.WHITE, "Change Username", 24, false);
         changeUsernameButton.setOnAction(e -> changeUsernameCallback.accept(true));
 
-        VBox options = new VBox(20, findNewGameButton, changeUsernameButton);
+        VBox options = new VBox(20, findNewGameButton, joinFromLobbyButton, changeUsernameButton);
         options.setAlignment(Pos.CENTER);
 
         // List of online users displayed on the center-right of the screen

@@ -16,6 +16,7 @@ public class Server{
 	ArrayList<ClientThread> clients = new ArrayList<>();
 	TheServer server;
 	ArrayList<ClientThread> waitingForGame = new ArrayList<>();
+	ArrayList<String> lobby = new ArrayList<>();
 	private final MessageDispatcher dispatcher;
 	private final Consumer<String> guiLogger;
 	private final Runnable updateClientsCallback;
@@ -93,6 +94,7 @@ public class Server{
 					    	clients.remove(this);
 							guiLogger.accept("Oops...Something wrong with the socket from client: " + count + "....closing down!");
 							waitingForGame.remove(this);
+							lobby.remove(this.getUsername());
 							if (this.activeGame != null) {
 								// Shuts down an active game if there is one. Sends the other player back to the main menu.
 								Platform.runLater(() -> guiLogger.accept("User quit while playing an active game! Sending quit message to other player..."));

@@ -65,6 +65,11 @@ public class GuiServer extends Application{
 					clientThread.sendMessage(new LoginResponse(true, "You are now authorized. Welcome " + loginMessage.getUsername() + "!"));
 					Platform.runLater(() -> listItems.getItems().add("The server set client #" + clientThread.count + "'s username to " + loginMessage.getUsername() + " and is now authorized."));
 				}
+				// Send to user a list of people currently in the lobby
+				for (String user : serverConnection.lobby) {
+					clientThread.sendMessage(new UpdateLobbyMessage(user, true));
+				}
+
 				// Notify all users of new active clients
 				sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
 			} catch (Exception e) {
@@ -198,6 +203,19 @@ public class GuiServer extends Application{
 				}
 			}
 		}));
+
+		// Handling when a user joins the lobby
+		dispatcher.registerHandler(UserLobbyUpdateMessage.class, (userLobbyUpdate, clientThread) -> {
+			boolean joinedOrLeftLobby;
+			if (userLobbyUpdate.isJoinedLobby()) {
+				serverConnection.lobby.add(clientThread.getUsername());
+				joinedOrLeftLobby = true;
+			} else {
+				serverConnection.lobby.remove(clientThread.getUsername());
+				joinedOrLeftLobby = false;
+			}
+			sendToAllAuthorizedUsers(new UpdateLobbyMessage(clientThread.getUsername(), joinedOrLeftLobby));
+		});
 
 		
 		listItems = new ListView<>();
