@@ -49,9 +49,7 @@ public class MainMenu {
         onlineUsersList = new VBox();
         onlineUsersList.setSpacing(20);
         Text onlineUsersText = new Text("Active Users");
-        onlineUsersText.setFont(Font.font("Londrina Solid", 32));
-        onlineUsersText.setStroke(Color.BLACK);
-        onlineUsersText.setStrokeWidth(1);
+
         ScrollPane scrollableList = new ScrollPane(onlineUsersList);
         VBox fullWindow = new VBox(onlineUsersText, scrollableList);
         fullWindow.setPickOnBounds(false);
@@ -67,6 +65,18 @@ public class MainMenu {
         StackPane.setAlignment(welcomeText, Pos.TOP_CENTER);
         StackPane.setAlignment(options, Pos.CENTER);
         StackPane.setAlignment(fullWindow, Pos.CENTER_RIGHT);
+
+        //online user list styles
+        onlineUsersText.setFont(Font.font("Londrina Solid", 32));
+        onlineUsersText.setStroke(Color.BLACK);
+        onlineUsersText.setStrokeWidth(1);
+        onlineUsersText.setFill(Color.WHITE);
+        onlineUsersList.setStyle("-fx-background-color: transparent; -fx-text-fill: white;");
+        scrollableList.setStyle("-fx-background-color: transparent;");
+        scrollableList.getStyleClass().add("userList");
+        scrollableList.getStylesheets().add("path/stylesheet.css");
+        StackPane.setMargin(fullWindow, new Insets(0, 50, 0, 0));
+
     }
 
     public void showInvitePopup(String requestorUsername) {
@@ -134,6 +144,7 @@ public class MainMenu {
                 Text usernameText = new Text(username);
                 usernameText.setFont(Font.font("Londrina Solid", 20));
                 usernameText.setStroke(Color.BLACK);
+                usernameText.setFill(Color.WHITE);
                 usernameText.setStrokeWidth(1);
                 Button thisButton = CustomJavaFXElementsTools.createStyledButton(60, 25, "#00B2FF", Color.WHITE, "Invite", 16, true);
                 thisButton.setOnAction(e -> {
