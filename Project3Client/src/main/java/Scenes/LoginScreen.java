@@ -23,6 +23,7 @@ public class LoginScreen {
         userNameTextField.setOnAction(e -> {
             System.out.println("Trying to send new username to server...");
             callback.accept(userNameTextField.getText());
+            System.out.println("Your username is set to: " + userNameTextField.getText());
         });
 
         // Title Label
