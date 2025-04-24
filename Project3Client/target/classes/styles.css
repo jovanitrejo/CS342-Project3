@@ -1,3 +1,7 @@
 * {
     -fx-font-family: "Londrina Solid";
 }
+
+.scrollPane .viewport{
+    -fx-background-color: transparent;
+}
