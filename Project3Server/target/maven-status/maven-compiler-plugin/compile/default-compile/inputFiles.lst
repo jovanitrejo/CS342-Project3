@@ -4,8 +4,10 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/MoveMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/GameSession.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/ChatMessage.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/UpdateLobbyMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageDispatcher.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/ReplayResponse.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/UserLobbyUpdateMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/InviteAcceptedMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/WaitingInQueueMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/InviteDeniedMessage.java

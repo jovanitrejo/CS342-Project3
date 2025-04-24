@@ -3,9 +3,11 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/utils/CustomJavaFXElementsTools.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/DrawMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/LoginResponse.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/Scenes/LobbyScreen.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/WinMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/Piece.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/contexts/GameState.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/UserLobbyUpdateMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/QuitMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/AvailableUsersMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageDispatcher.java
@@ -21,6 +23,7 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/UserAlreadyInGameMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/Scenes/ChatBox.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/LoginMessage.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/UpdateLobbyMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/InviteDeniedMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/NewGameMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/InviteAcceptedMessage.java

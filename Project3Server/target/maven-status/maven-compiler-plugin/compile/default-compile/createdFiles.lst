@@ -13,6 +13,7 @@ MessageClasses/InviteAcceptedMessage.class
 Server$ClientThread.class
 MessageClasses/ChatMessage.class
 MessageClasses/NewGameResponse.class
+MessageClasses/UserLobbyUpdateMessage.class
 MessageClasses/BoardUpdate.class
 MessageClasses/AvailableUsersMessage.class
 MessageClasses/QuitMessage.class
@@ -25,3 +26,4 @@ MessageClasses/LoginResponse.class
 GameSession.class
 MessageClasses/ReplayRequest.class
 Server.class
+MessageClasses/UpdateLobbyMessage.class
