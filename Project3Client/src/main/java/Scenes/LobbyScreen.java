@@ -24,8 +24,10 @@ public class LobbyScreen {
     public LobbyScreen(Runnable backToMainMenuCallback, Consumer<String> joinUserCallback, Runnable joinLobbyCallback, Runnable leaveLobbyCallback) {
         this.joinUserCallback = joinUserCallback;
         backToMainMenuButton.setOnAction(e -> backToMainMenuCallback.run());
-        screen.setPrefSize(800, 600);
-        screen.setMaxSize(800, 600);
+//        screen.setPrefSize(800, 600);
+//        screen.setMaxSize(800, 600);
+        screen.setPrefSize(600, 400);
+        screen.setMaxSize(600, 400);
         screen.setSpacing(20);
         screen.setBackground(new Background(new BackgroundFill(
                 Color.WHITE,
@@ -62,16 +64,46 @@ public class LobbyScreen {
         root.setPickOnBounds(false);
         backToMainMenuButton.setPickOnBounds(false);
         joinLobbyButton.setPickOnBounds(false);
+
+        //styles
+        Text lobbyTitle = new Text("Available Lobbies");
+        lobbyTitle.setFill(Color.WHITE);
+        lobbyTitle.setStroke(Color.BLACK);
+        lobbyTitle.setStrokeWidth(1);
+        lobbyTitle.setStyle("-fx-font-size: 40px");
+
+        HBox lobbyBox = new HBox(lobbyTitle);
+        screen.getChildren().add(lobbyBox);
+        lobbyBox.setAlignment(Pos.CENTER);
+        screen.setStyle("-fx-background-color: rgba(125, 125, 125, 0.75);");
+        StackPane.setMargin(backToMainMenuButton, new Insets(0, 0, 100, 50));
+        StackPane.setMargin(joinLobbyButton, new Insets(0, 50, 100, 0));
+        backToMainMenuButton.setPrefWidth(200);
+        backToMainMenuButton.setPrefHeight(50);
+        joinLobbyButton.setPrefWidth(200);
+        joinLobbyButton.setPrefHeight(50);
+
     }
 
     public void addToLobbyScreen(String user) {
-        Text username = new Text(user);
+        Text username = new Text("JOIN: "+ user);
         HBox container = new HBox(username);
         container.setOnMouseClicked(e -> joinUserCallback.accept(user));
         usersInLobby.put(user, container);
 
         // Add to screen
         screen.getChildren().add(container);
+        container.setAlignment(Pos.CENTER);
+        username.setFill(Color.WHITE);
+        username.setStyle("-fx-font-size: 30px;");
+        username.setStroke(Color.BLACK);
+        username.setStrokeWidth(1);
+        username.setOnMouseEntered(e -> {
+            username.setStyle("-fx-fill: #1DFA00; -fx-underline: true; -fx-font-size: 30px;");
+        });
+        username.setOnMouseExited(e -> {
+            username.setStyle("-fx-fill: white; -fx-underline: false; -fx-font-size: 30px;");
+        });
     }
 
     public void removeFromLobbyScreen(String user) {
