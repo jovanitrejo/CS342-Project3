@@ -7,9 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 import javafx.util.Pair;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 public class GameSession implements Runnable {
-    private Thread gameThread;           // (1) hold onto the running thread
+    private Thread gameThread;
     private final Piece[][] board = new Piece[6][7];
     ArrayList<String> chat = new ArrayList<>();
     Server.ClientThread player1;
@@ -17,12 +18,13 @@ public class GameSession implements Runnable {
     Server.ClientThread currentPlayer;
     private final Instant startTime;
     private int totalMoves = 0;
+    private final Consumer<String> guiLogger;
 
-    public GameSession(Server.ClientThread player1, Server.ClientThread player2) {
+    public GameSession(Server.ClientThread player1, Server.ClientThread player2, Consumer<String> guiLogger) {
         this.startTime = Instant.now();
         this.player1 = player1;
         this.player2 = player2;
-
+        this.guiLogger = guiLogger;
 
         // pick a random color for player1, and invert for player2
         boolean p1IsRed  = ThreadLocalRandom.current().nextBoolean();
@@ -73,6 +75,9 @@ public class GameSession implements Runnable {
             Piece[][] boardCopy = snapshotBoard();
             player1.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player1));
             player2.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player2));
+            String winnerUsername = userWhoMadeMove.getUsername().equals(player1.getUsername()) ? player1.getUsername() : player2.getUsername();
+            String loserUsername = !userWhoMadeMove.getUsername().equals(player1.getUsername()) ? player1.getUsername() : player2.getUsername();
+            guiLogger.accept(winnerUsername + " WON THE GAME BETWEEN THEM AND " + loserUsername);
             player1.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player1.getUsername()), winningPieces.getKey(), minutes, totalMoves, winningPieces.getValue()));
             player2.sendMessage(new WinMessage(userWhoMadeMove.getUsername().equals(player2.getUsername()), winningPieces.getKey(), minutes, totalMoves, winningPieces.getValue()));
             endGame();
@@ -82,6 +87,7 @@ public class GameSession implements Runnable {
         if(isBoardFull()) {
             Instant endTime = Instant.now();
             long minutes = Duration.between(startTime, endTime).toMinutes();
+            guiLogger.accept("GAME BETWEEN " + player1.getUsername() + " AND " + player2.getUsername() + " RESULTED IN A DRAW!");
             player1.sendMessage(new DrawMessage(minutes, totalMoves));
             player2.sendMessage(new DrawMessage(minutes, totalMoves));
             endGame();
