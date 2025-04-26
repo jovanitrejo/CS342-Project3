@@ -26,7 +26,7 @@ public class ChatBox {
     public ChatBox(Color myColor, Color opponentColor, Consumer<String> sendMessageCallback) {
         this.sendMessageCallback = sendMessageCallback;
         this.opponentColor = opponentColor;
-        // 1) header + toggle
+        // header and toggle
         Label headerLabel = new Label("Game Chat");
         toggleButton = new Button("↓");
         toggleButton.setOnAction(e -> toggleShowChat());
@@ -36,7 +36,7 @@ public class ChatBox {
         header.setPrefHeight(40);
         header.setStyle("-fx-background-color: rgba(39, 38, 38, 0.6)");
 
-        // 2) chat content
+        // chat content
         chatBox = new VBox(6);
         chatBox.setPadding(new Insets(8));
         chatBox.setStyle("-fx-background-color: rgba(47,47,47,0.7)");
@@ -46,7 +46,7 @@ public class ChatBox {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         chatBox.heightProperty().addListener((o,oldV,newV) -> scrollPane.setVvalue(1.0));
 
-        // 3) input
+        // input
         TextField textBox = new TextField();
         Button sendButton = new Button();
         sendButton.setGraphic(new ImageView(new Image("Send_Button.png")));
@@ -56,7 +56,7 @@ public class ChatBox {
         inputBox.setPadding(new Insets(8));
         inputBox.setAlignment(Pos.CENTER);
 
-        // 4) assemble
+        // assemble
         container = new VBox(header, scrollPane, inputBox);
         container.setPrefWidth(450);
         container.setMaxWidth(450);
@@ -106,6 +106,7 @@ public class ChatBox {
         toggleButton.setText(shouldShow ? "↓" : "↑");
     }
 
+    // Takes test from text-field, clears it, and sends to server
     private void onSend(TextField textBox, Color myColor) {
         String msg = textBox.getText().trim();
         if (msg.isEmpty()) return;
@@ -114,6 +115,7 @@ public class ChatBox {
         textBox.clear();
     }
 
+    // Adds an opponent's message when received from the server
     public void addOpponentMessage(String message, String opponentUsername) {
         if (message.isEmpty()) return;
         System.out.println("Opponent said: " + message);

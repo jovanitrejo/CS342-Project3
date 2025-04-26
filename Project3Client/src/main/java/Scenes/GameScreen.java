@@ -47,7 +47,7 @@ public class GameScreen {
     public Button quitButton;
     public String opponentUsername;
     private VBox replayPopUp;
-    /** each spot knows how to paint itself from a Piece */
+
     private static class BoardSpot {
         private final StackPane cell = new StackPane();
         private final Text filled = new Text("");
@@ -85,12 +85,13 @@ public class GameScreen {
             cell.lookup("#circle").setStyle("-fx-stroke: #00FF66; -fx-stroke-width: 5px");
         }
 
-        /** paint an EMPTY/PLAYER1/PLAYER2 into this cell */
+        // Sets color of the piece
         public void setColor(Color c) {
             circle.setFill(c);
         }
     }
 
+    // Constructor (Just creates the "Waiting for Opponent" screen)
     public GameScreen(BiConsumer<Integer, Integer> callback, Runnable mainMenuCallback, Runnable replayButtonCallback, Runnable replayAcceptedCallback, Runnable replayDeniedCallback, Consumer<String> sendMessageCallback, boolean isLocalPlay) {
         this.callback = callback;
         this.mainMenuCallback = mainMenuCallback;
@@ -128,6 +129,8 @@ public class GameScreen {
         quitPopUp = CustomJavaFXElementsTools.createPopUp(() -> {mainMenuCallback.run(); handleQuit();}, () -> {hidePopUp(); showQuitButton();}, "Are you sure you want to quit?", "Yes", "No");
     }
 
+    // Starts a new game by initializing the board, assigning a color, whose turn it is, and their player number.
+    // Will initialize a local game and use localGameSession if "isLocalPlay" is set to true".
     public void startNewGame(String opponent, boolean isRed, boolean isYourTurn, int playerSlot) {
         state = new GameState(isRed, isYourTurn, playerSlot);
 
@@ -206,7 +209,7 @@ public class GameScreen {
                     changeTurnText();
                 }
             } else {
-                // Server play logic (already correct)
+                // Server play logic
                 state.applyMove(selectedCol);
                 callback.accept(selectedRow, selectedCol);
                 state.setIsYourTurn(false);
@@ -292,6 +295,7 @@ public class GameScreen {
         }
     }
 
+    // Give a list of pieces that result in a win, a highlight is placed to inform the users.
     public void highlightWinningPieces(List<int[]> winningPieces) {
         Platform.runLater(() -> {
             for (int[] pos : winningPieces) {
@@ -301,6 +305,7 @@ public class GameScreen {
         });
     }
 
+    // Shows game stats of the game when it ends
     public void showGameEnded(boolean wasDraw, boolean youWon, long lengthInMinutes, int totalNumMoves, String winDirection) {
         // hide the quit button
         hideQuitButton();
@@ -374,6 +379,7 @@ public class GameScreen {
         }
     }
 
+    // Used when someone rematches, gives you a choice to accept or not
     public void showReplayPopUp() {
         replayPopUp = CustomJavaFXElementsTools.createPopUp(
                 () -> {
@@ -387,16 +393,14 @@ public class GameScreen {
         currentDisplay.getChildren().add(replayPopUp);
     }
 
+    // Removes the replay pop up if "no" is clicked.
     private void hideReplayPopUp() {
         ObservableList<Node> kids = currentDisplay.getChildren();
         kids.remove(replayPopUp);
         this.replayPopUp = null;
     }
 
-    public StackPane getCurrentDisplay() {
-        return currentDisplay;
-    }
-
+    // Changes the turnLabel depending on if it is your turn or not
     public void changeTurnText() {
         if (isLocalPlay) {
             turnLabel.setText(localGameSession.player1Turn ? "Player 1's Turn..." : "Player 2's Turn...");
@@ -405,6 +409,7 @@ public class GameScreen {
         }
     }
 
+    // Ends the game and defaults back to waiting for opponent
     public void handleQuit() {
         Text waiting = new Text("Waiting for opponent");
         waiting.setFont(Font.font("Londrina Solid", 60));
@@ -424,6 +429,8 @@ public class GameScreen {
         currentDisplay = new StackPane(fullMessage);
         StackPane.setAlignment(waiting, Pos.CENTER);
     }
+
+    // Showers and hiders
 
     public void showMakeMoveButton() {
         if (selectedCol == -1 || selectedRow == -1) return;
@@ -483,5 +490,9 @@ public class GameScreen {
         if (!kids.contains(quitButton)) {
             kids.add(quitButton);
         }
+    }
+
+    public StackPane getCurrentDisplay() {
+        return currentDisplay;
     }
 }
