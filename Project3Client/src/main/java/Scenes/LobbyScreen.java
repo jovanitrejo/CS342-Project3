@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 public class LobbyScreen {
     VBox screen = new VBox();
     public boolean inLobby = false;
+    Text waitingText = new Text("Waiting for someone to join you...");
     Button backToMainMenuButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Back to Main Menu", 24, false);
     Button joinLobbyButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Join Lobby", 24, false);
     private final Consumer<String> joinUserCallback;
@@ -22,15 +23,21 @@ public class LobbyScreen {
     HashMap<String, HBox> usersInLobby = new HashMap<>();
 
     public LobbyScreen(Runnable backToMainMenuCallback, Consumer<String> joinUserCallback, Runnable joinLobbyCallback, Runnable leaveLobbyCallback) {
+
+        waitingText.setFont(Font.font("Londrina Solid", 60));
+        waitingText.setFill(Color.WHITE);
+        waitingText.setStroke(Color.BLACK);
+        waitingText.setStrokeWidth(1);
+        waitingText.setTextAlignment(TextAlignment.CENTER);
+        StackPane.setAlignment(waitingText, Pos.CENTER);
+
         this.joinUserCallback = joinUserCallback;
         backToMainMenuButton.setOnAction(e -> backToMainMenuCallback.run());
-//        screen.setPrefSize(800, 600);
-//        screen.setMaxSize(800, 600);
         screen.setPrefSize(600, 400);
         screen.setMaxSize(600, 400);
         screen.setSpacing(20);
         screen.setBackground(new Background(new BackgroundFill(
-                Color.WHITE,
+                Color.rgb(125, 125, 125, 0.75),
                 new CornerRadii(15),
                 Insets.EMPTY
         )));
@@ -40,11 +47,13 @@ public class LobbyScreen {
                 joinLobbyButton.setText("Leave Lobby");
                 // Hide the list of users
                 root.getChildren().remove(screen);
+                root.getChildren().add(waitingText);
                 joinLobbyCallback.run();
             } else {
                 inLobby = false;
                 joinLobbyButton.setText("Join Lobby");
                 // Show the list of users in the lobby
+                root.getChildren().remove(waitingText);
                 root.getChildren().add(screen);
                 leaveLobbyCallback.run();
             }
@@ -66,7 +75,7 @@ public class LobbyScreen {
         joinLobbyButton.setPickOnBounds(false);
 
         //styles
-        Text lobbyTitle = new Text("Available Lobbies");
+        Text lobbyTitle = new Text("Available Players");
         lobbyTitle.setFill(Color.WHITE);
         lobbyTitle.setStroke(Color.BLACK);
         lobbyTitle.setStrokeWidth(1);
@@ -75,9 +84,8 @@ public class LobbyScreen {
         HBox lobbyBox = new HBox(lobbyTitle);
         screen.getChildren().add(lobbyBox);
         lobbyBox.setAlignment(Pos.CENTER);
-        screen.setStyle("-fx-background-color: rgba(125, 125, 125, 0.75);");
-        StackPane.setMargin(backToMainMenuButton, new Insets(0, 0, 100, 50));
-        StackPane.setMargin(joinLobbyButton, new Insets(0, 50, 100, 0));
+        StackPane.setMargin(backToMainMenuButton, new Insets(0, 0, 50, 50));
+        StackPane.setMargin(joinLobbyButton, new Insets(0, 50, 50, 0));
         backToMainMenuButton.setPrefWidth(200);
         backToMainMenuButton.setPrefHeight(50);
         joinLobbyButton.setPrefWidth(200);
@@ -86,9 +94,13 @@ public class LobbyScreen {
     }
 
     public void addToLobbyScreen(String user) {
-        Text username = new Text("JOIN: "+ user);
-        HBox container = new HBox(username);
-        container.setOnMouseClicked(e -> joinUserCallback.accept(user));
+        Text username = new Text(user);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button joinButton = CustomJavaFXElementsTools.createStyledButton(100, 50, "#00B2FF", Color.WHITE, "Join Game", 24, true);
+        HBox container = new HBox(username, spacer, joinButton);
+        container.setPadding(new Insets(0, 20, 0, 20));
+        joinButton.setOnMouseClicked(e -> joinUserCallback.accept(user));
         usersInLobby.put(user, container);
 
         // Add to screen
@@ -98,12 +110,6 @@ public class LobbyScreen {
         username.setStyle("-fx-font-size: 30px;");
         username.setStroke(Color.BLACK);
         username.setStrokeWidth(1);
-        username.setOnMouseEntered(e -> {
-            username.setStyle("-fx-fill: #1DFA00; -fx-underline: true; -fx-font-size: 30px;");
-        });
-        username.setOnMouseExited(e -> {
-            username.setStyle("-fx-fill: white; -fx-underline: false; -fx-font-size: 30px;");
-        });
     }
 
     public void removeFromLobbyScreen(String user) {
