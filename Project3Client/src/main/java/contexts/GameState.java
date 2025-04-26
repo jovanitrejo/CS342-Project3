@@ -66,7 +66,6 @@ public class GameState {
     public void applyMove(int column) {
         int row = findFreeRow(column);
         gameBoard[row][column] = myPiece;
-        return row;
     }
 
     public boolean isYourTurn() { return isYourTurn; }
