@@ -26,9 +26,12 @@ public class GuiClient extends Application{
 	GameScreen gameScreen;
 	LobbyScreen lobbyScreen;
 
+	// Initialize the classes used to handle GUI.
 	public void setupScreens() {
+		// Initialize loginScreen with callback that sends a username to the server
 		loginScreen = new LoginScreen((username) -> clientConnection.send(new LoginMessage(username)));
 
+		// Initialized the mainMenu object with callBacks for finding a new game, changing usernames, sending messages, playing offline, etc.
 		mainMenu = new MainMenu(
 				findNewGame -> {
 					clientConnection.send(new NewGameMessage());
@@ -94,7 +97,7 @@ public class GuiClient extends Application{
 				}
 		);
 
-
+		// Initialize the lobby screen with button callbacks and sending to server.
 		lobbyScreen = new LobbyScreen(
 				() -> Platform.runLater(() -> {
 					root.getChildren().remove(currentGUI);
@@ -107,6 +110,7 @@ public class GuiClient extends Application{
 		);
 	}
 
+	// Create new messageDispatcher, which holds all the handlers for different Message class concrete types.
 	MessageDispatcher messageDispatcher = new MessageDispatcher();
 	
 	public static void main(String[] args) {
@@ -126,10 +130,13 @@ public class GuiClient extends Application{
 		// Initialize login screen
 		loginScreen = new LoginScreen(username -> clientConnection.send(new LoginMessage(username)));
 
+		// Set current display to login-screen (user needs to authorize themselves)
 		currentGUI = loginScreen.getRoot();
 
-		// Add image and context to root
+		// Add image and current display (login screen) to root.
 		root.getChildren().addAll(imageBackground, currentGUI);
+
+		// All message dispatchers to the client to handle new messages from the server
 		clientConnection = new Client(messageDispatcher);
 
 		// Creating handler for login response
@@ -175,7 +182,6 @@ public class GuiClient extends Application{
 						false // playing online
 				);
 			}
-
 			gameScreen.startNewGame(message.getOpponentUsername(), message.amIRed(), message.isItMyTurn(), message.getPlayerSlot());
 			root.getChildren().remove(currentGUI);
             currentGUI = gameScreen.getCurrentDisplay();
@@ -270,15 +276,17 @@ public class GuiClient extends Application{
 			});
 		}));
 
+		// Start the client thread
 		clientConnection.start();
 
+		// Called when closing the game window
 		primaryStage.setOnCloseRequest(t -> {
             Platform.exit();
             System.exit(0);
         });
 
+		// Create a new scene with objects we instantiated. Show it.
 		Scene scene = new Scene(root, 1280, 720);
-		System.out.println(getClass().getResource("/fonts/Londrina_Solid/LondrinaSolid-Regular.ttf"));
 		scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/styles.css")).toExternalForm());
 		imageBackground.fitWidthProperty().bind(scene.widthProperty());
 		imageBackground.fitHeightProperty().bind(scene.heightProperty());
@@ -287,6 +295,7 @@ public class GuiClient extends Application{
 		primaryStage.show();
 	}
 
+	// Called when a user presses "Play Locally" button or "Replay" when a user wants to replay locally
 	private void createNewLocalGameScreen() {
 		GameScreen newGameScreen = new GameScreen(
 				(row, col) -> {},

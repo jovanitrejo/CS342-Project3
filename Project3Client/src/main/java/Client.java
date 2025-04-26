@@ -9,13 +9,15 @@ import java.net.Socket;
 
 public class Client extends Thread{
 
-	
+	// Objects used to communicate with server
 	Socket socketClient;
 	ObjectOutputStream out;
 	ObjectInputStream in;
-	
+
+	// Handler class used to handle specific message types (specifically implemented in GuiClient.java)
 	private final MessageDispatcher dispatcher;
-	
+
+	// Constructor
 	Client(MessageDispatcher dispatcher){
 		this.dispatcher = dispatcher;
 	}
@@ -42,7 +44,8 @@ public class Client extends Thread{
 			}
 		}
     }
-	
+
+	// Sends a Message object to the server
 	public void send(Message message) {
 		try {
 			out.reset();

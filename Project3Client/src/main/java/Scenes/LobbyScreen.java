@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 
 public class LobbyScreen {
-    private final VBox userList = new VBox();  // NEW: This will hold only the users
+    private final VBox userList = new VBox();
     VBox screen = new VBox();
     public boolean inLobby = false;
     Text waitingText = new Text("Waiting for someone to join you...");
@@ -74,6 +74,7 @@ public class LobbyScreen {
         StackPane.setAlignment(backToMainMenuButton, Pos.BOTTOM_LEFT);
         StackPane.setAlignment(joinLobbyButton, Pos.BOTTOM_RIGHT);
 
+        // Making sure only the element is clickable
         root.setPickOnBounds(false);
         backToMainMenuButton.setPickOnBounds(false);
         joinLobbyButton.setPickOnBounds(false);
@@ -110,6 +111,7 @@ public class LobbyScreen {
         joinLobbyButton.setPrefHeight(50);
     }
 
+    // Adds a user to the lobby screen
     public void addToLobbyScreen(String user) {
         Text username = new Text(user);
         Region spacer = new Region();
@@ -135,6 +137,7 @@ public class LobbyScreen {
         username.setStrokeWidth(1);
     }
 
+    // Removes a user from the lobby screen
     public void removeFromLobbyScreen(String user) {
         if (usersInLobby.containsKey(user)) {
             // Remove from screen
@@ -142,6 +145,7 @@ public class LobbyScreen {
         }
     }
 
+    // Called when clicking the Back to Main Menu button
     public void leaveLobby() {
         joinLobbyButton.fire();
     }

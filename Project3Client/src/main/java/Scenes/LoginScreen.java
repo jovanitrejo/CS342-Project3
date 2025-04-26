@@ -47,6 +47,7 @@ public class LoginScreen {
         return this.root;
     }
 
+    // Used when getting a response from the server that doesn't authorize the client
     public void setWarningLabel(String text) {
         Platform.runLater(() -> warningLabel.setText(text));
     }

@@ -39,6 +39,7 @@ public class MainMenu {
         welcomeText.setAlignment(Pos.TOP_CENTER);
         welcomeText.setPadding(new Insets(65, 0, 0, 0));
 
+        // Instantiate the buttons and link their callbacks.
         Button findNewGameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Find New Game", 24, false);
         findNewGameButton.setOnAction(e -> findNewGameCallback.accept(true));
 
@@ -51,6 +52,7 @@ public class MainMenu {
         Button changeUsernameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#656565", Color.WHITE, "Change Username", 24, false);
         changeUsernameButton.setOnAction(e -> changeUsernameCallback.accept(true));
 
+        // Organize the buttons to a VBox.
         VBox options = new VBox(20, findNewGameButton, joinFromLobbyButton, playLocallyButton, changeUsernameButton);
         options.setAlignment(Pos.CENTER);
 
@@ -58,7 +60,6 @@ public class MainMenu {
         onlineUsersList = new VBox();
         onlineUsersList.setSpacing(20);
         Text onlineUsersText = new Text("Active Users");
-
         ScrollPane scrollableList = new ScrollPane(onlineUsersList);
         VBox fullWindow = new VBox(onlineUsersText, scrollableList);
         fullWindow.setPickOnBounds(false);
@@ -70,6 +71,7 @@ public class MainMenu {
         fullWindow.setMaxSize(275, 400);
         fullWindow.setPadding(new Insets(10, 10, 10, 20));
 
+        // Add all buttons and screen to the root.
         root = new StackPane(welcomeText, options, fullWindow);
         StackPane.setAlignment(welcomeText, Pos.TOP_CENTER);
         StackPane.setAlignment(options, Pos.CENTER);
@@ -90,6 +92,7 @@ public class MainMenu {
 
     }
 
+    // Creates a pop-up and adds to the root of the display. Used for when a user gets a game invite from another user.
     public void showInvitePopup(String requestorUsername) {
         final VBox[] newInvitePopUp = new VBox[1];
         pendingInvites.add(requestorUsername);
@@ -122,6 +125,7 @@ public class MainMenu {
         root.getChildren().add(newInvitePopUp[0]);
     }
 
+    // Helper function used to remove all other pop-up notifications behind the one a user accepted (if present)
     private void hideAllOtherInvitePopUps() {
         for (VBox popup : new ArrayList<>(activeInvitePopUps)) {
             root.getChildren().remove(popup);
@@ -129,11 +133,13 @@ public class MainMenu {
         activeInvitePopUps.clear();
     }
 
+    // Used to hide a pop-up when a user clicks "No"
     private void hideReplayPopUp(VBox newInvitePopUp) {
         ObservableList<Node> kids = root.getChildren();
         kids.remove(newInvitePopUp);
     }
 
+    // Shows a notification to inform the user that they cannot join the invite since the requestor joined a different game.
     public void showRequestorIsAlreadyInGame() {
         final VBox[] newNotification = new VBox[1];
         newNotification[0] = CustomJavaFXElementsTools.createNotification(
@@ -143,6 +149,7 @@ public class MainMenu {
         root.getChildren().add(newNotification[0]);
     }
 
+    // Given a list of users, the current list of active users is updated (to invite to play)
     public void updateActiveUsers(ArrayList<String> usernames, String myUsername) {
         // Remove the existing list of users
         System.out.println("Updating active users");
@@ -181,6 +188,7 @@ public class MainMenu {
         }
     }
 
+    // Used for when a user denies an invitation request, will allow the user to re-send another invite if they wish.
     public void reEnableInviteButton(String username) {
         System.out.println("Trying to re-enable: " + username);
         if (!availableUsers.containsKey(username)) {
@@ -191,6 +199,7 @@ public class MainMenu {
         usersButton.setDisable(false);
     }
 
+    // Disabled the invite button for the user when they send an invitation request.
     public void disableInviteButton(String username) {
         System.out.println("Trying to disable: " + username);
         if (!availableUsers.containsKey(username)) {
@@ -201,6 +210,7 @@ public class MainMenu {
         usersButton.setDisable(true);
     }
 
+    // returns the root of the MainMenu (for GuiClient.java)
     public StackPane getRoot() {
         return this.root;
     }

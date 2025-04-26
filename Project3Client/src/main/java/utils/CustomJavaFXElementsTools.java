@@ -13,6 +13,8 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
 public class CustomJavaFXElementsTools {
+
+    // Created a custom label
     public static VBox createCustomLabel(String textDisplay) {
         Text text = new Text(textDisplay);
         text.setFont(Font.font("Londrina Solid", 60));
@@ -37,6 +39,7 @@ public class CustomJavaFXElementsTools {
         return wrapped;
     }
 
+    // Creates a custom styled text field
     public static TextField createCustomTextField(String placeholder) {
         TextField tf = new TextField();
         tf.setPromptText(placeholder);
@@ -46,6 +49,7 @@ public class CustomJavaFXElementsTools {
         return tf;
     }
 
+    // Creates a custom styled button which matches Figma concept. Handles hover styles and fonts
     public static Button createStyledButton(int width, int height, String backgroundColorHex, Color textColor, String buttonText, int fontSize, boolean addStroke) {
         Button customButton = new Button(buttonText);
         customButton.setMaxWidth(width);
@@ -85,6 +89,7 @@ public class CustomJavaFXElementsTools {
         return customButton;
     }
 
+    // helper function used that takes an existing hex string and darkens it.
     public static String darkenHexColor(String hexColor, double factor) {
         // Remove the '#' and parse each color component
         hexColor = hexColor.replace("#", "");
@@ -105,6 +110,8 @@ public class CustomJavaFXElementsTools {
         return Math.max(0, Math.min(255, value));
     }
 
+    // Created a pop-up to display to the user a request of some sort (quitting, invite, etc.)
+    // Requires two callbacks for the buttons that will be displayed (logic created on instantiation)
     public static VBox createPopUp(Runnable button1Callback, Runnable button2Callback, String popupText, String button1Text, String button2Text) {
         Text message = new Text(popupText);
         message.setFont(Font.font("Londrina Solid", 60));
@@ -114,11 +121,13 @@ public class CustomJavaFXElementsTools {
         message.setFill(Color.WHITE);
         message.setWrappingWidth(590);
 
+        // Create buttons and link their callbacks
         Button button1 = createStyledButton(175, 50, "#FF0000", Color.WHITE, button1Text, 24, true);
         button1.setOnAction(e -> button1Callback.run());
         Button button2 = createStyledButton(175, 50, "#1DFA00", Color.WHITE, button2Text, 24, true);
         button2.setOnAction(e -> button2Callback.run());
 
+        // Organize objects
         HBox buttonOptions = new HBox(50, button1, button2);
         VBox popUp = new VBox(message, buttonOptions);
 
@@ -148,6 +157,7 @@ public class CustomJavaFXElementsTools {
         return popUp;
     }
 
+    // Used to display a notification to the user (For example, they can't join a user)
     public static VBox createNotification(Runnable buttonCallback, String popupText) {
         Text notification = new Text(popupText);
         notification.setFont(Font.font("Londrina Solid", 60));
