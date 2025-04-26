@@ -262,13 +262,13 @@ public class GuiServer extends Application{
         });
 
 		primaryStage.setScene(sceneMap.get("server"));
-		primaryStage.setTitle("This is the Server");
+		primaryStage.setTitle("Server");
 		primaryStage.show();
 		
 	}
 
 	private Thread getThread(Server.ClientThread clientThread, Server.ClientThread opponent) {
-		GameSession session = new GameSession(clientThread, opponent);
+		GameSession session = new GameSession(clientThread, opponent, (update) -> listItems.getItems().add(update));
 		clientThread.activeGame = session;
 		opponent.activeGame = session;
 		sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
