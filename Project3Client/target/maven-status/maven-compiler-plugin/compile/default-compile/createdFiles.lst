@@ -18,11 +18,13 @@ MessageClasses/UserLobbyUpdateMessage.class
 MessageClasses/BoardUpdate.class
 MessageClasses/AvailableUsersMessage.class
 MessageClasses/QuitMessage.class
+contexts/LocalGameSession.class
 Scenes/LoginScreen.class
 MessageClasses/Message.class
 MessageClasses/ReplayResponse.class
 Client.class
 MessageClasses/Piece.class
+MessageClasses/PlayingOfflineMessage.class
 MessageClasses/NewGameMessage.class
 MessageClasses/LoginResponse.class
 Scenes/MainMenu.class

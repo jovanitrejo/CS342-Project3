@@ -7,6 +7,7 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/WinMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/Piece.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/contexts/GameState.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/PlayingOfflineMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/UserLobbyUpdateMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/QuitMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/AvailableUsersMessage.java
@@ -18,6 +19,7 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/Scenes/MainMenu.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/Message.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/WaitingInQueueMessage.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/contexts/LocalGameSession.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/ReplayResponse.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/Client.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Client/src/main/java/MessageClasses/UserAlreadyInGameMessage.java

@@ -21,6 +21,7 @@ Server$TheServer.class
 MessageClasses/Message.class
 MessageClasses/ReplayResponse.class
 MessageClasses/Piece.class
+MessageClasses/PlayingOfflineMessage.class
 MessageClasses/NewGameMessage.class
 MessageClasses/LoginResponse.class
 GameSession.class

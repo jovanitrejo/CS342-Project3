@@ -22,6 +22,7 @@
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/NewGameResponse.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/ReplayRequest.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/AvailableUsersMessage.java
+/Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/PlayingOfflineMessage.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/Piece.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/BoardUpdate.java
 /Users/jovanitrejo/UIC Local/CS342/Project 3/Project3Server/src/main/java/MessageClasses/LoginMessage.java
