@@ -30,7 +30,28 @@ public class GuiClient extends Application{
 		loginScreen = new LoginScreen((username) -> clientConnection.send(new LoginMessage(username)));
 
 		mainMenu = new MainMenu(
-				findNewGame -> clientConnection.send(new NewGameMessage()),
+				findNewGame -> {
+					clientConnection.send(new NewGameMessage());
+					gameScreen = new GameScreen(
+							(row, col) -> clientConnection.send(new MoveMessage(row, col)),
+							() -> {
+								clientConnection.send(new QuitMessage());
+								Platform.runLater(() -> {
+									root.getChildren().remove(currentGUI);
+									currentGUI = mainMenu.getRoot();
+									root.getChildren().add(currentGUI);
+								});
+							},
+							() -> clientConnection.send(new ReplayRequest()),
+							() -> clientConnection.send(new ReplayResponse(true)),
+							() -> clientConnection.send(new ReplayResponse(false)),
+							(message) -> clientConnection.send(new ChatMessage(message)),
+							false
+					);
+					root.getChildren().remove(currentGUI);
+					currentGUI = mainMenu.getRoot();
+					root.getChildren().add(currentGUI);
+				},
 				changeUsername -> Platform.runLater(() -> {
 					root.getChildren().remove(currentGUI);
 					currentGUI = loginScreen.getRoot();
@@ -41,26 +62,38 @@ public class GuiClient extends Application{
 				(opponent) -> clientConnection.send(new InviteUserMessage(opponent)),
 				() -> Platform.runLater(() -> {
 					root.getChildren().remove(currentGUI);
-					currentGUI = lobbyScreen.getRoot();  // lobbyScreen is now safely initialized
+					currentGUI = lobbyScreen.getRoot();
 					root.getChildren().add(currentGUI);
-				})
-		);
-
-		gameScreen = new GameScreen(
-				(row, col) -> clientConnection.send(new MoveMessage(row, col)),
+				}),
 				() -> {
-					clientConnection.send(new QuitMessage());
+					System.out.println("Letting server know we are playing offline...");
+					clientConnection.send(new PlayingOfflineMessage(true));
+					System.out.println("Sent...");
+					gameScreen = new GameScreen(
+							(row, col) -> {},
+							() -> {
+								clientConnection.send(new PlayingOfflineMessage(false));
+								Platform.runLater(() -> {
+									root.getChildren().remove(currentGUI);
+									currentGUI = mainMenu.getRoot();
+									root.getChildren().add(currentGUI);
+								});
+							},
+							() -> Platform.runLater(this::createNewLocalGameScreen),
+							() -> {},
+							() -> {},
+							(string) -> {},
+							true
+					);
 					Platform.runLater(() -> {
+						gameScreen.startNewGame("Local Player 2", true, true, 1);
 						root.getChildren().remove(currentGUI);
-						currentGUI = mainMenu.getRoot();
+						currentGUI = gameScreen.getCurrentDisplay();
 						root.getChildren().add(currentGUI);
 					});
-				},
-				() -> clientConnection.send(new ReplayRequest()),
-				() -> clientConnection.send(new ReplayResponse(true)),
-				() -> clientConnection.send(new ReplayResponse(false)),
-				(message) -> clientConnection.send(new ChatMessage(message))
+				}
 		);
+
 
 		lobbyScreen = new LobbyScreen(
 				() -> Platform.runLater(() -> {
@@ -122,6 +155,27 @@ public class GuiClient extends Application{
 			if (lobbyScreen.inLobby) {
 				lobbyScreen.leaveLobby();
 			}
+
+			if (gameScreen == null) {
+				System.out.println("Creating a new GameScreen because none exists yet...");
+				gameScreen = new GameScreen(
+						(row, col) -> clientConnection.send(new MoveMessage(row, col)),
+						() -> {
+							clientConnection.send(new QuitMessage());
+							Platform.runLater(() -> {
+								root.getChildren().remove(currentGUI);
+								currentGUI = mainMenu.getRoot();
+								root.getChildren().add(currentGUI);
+							});
+						},
+						() -> clientConnection.send(new ReplayRequest()),
+						() -> clientConnection.send(new ReplayResponse(true)),
+						() -> clientConnection.send(new ReplayResponse(false)),
+						(messageString) -> clientConnection.send(new ChatMessage(messageString)),
+						false // playing online
+				);
+			}
+
 			gameScreen.startNewGame(message.getOpponentUsername(), message.amIRed(), message.isItMyTurn(), message.getPlayerSlot());
 			root.getChildren().remove(currentGUI);
             currentGUI = gameScreen.getCurrentDisplay();
@@ -231,6 +285,30 @@ public class GuiClient extends Application{
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Client");
 		primaryStage.show();
+	}
+
+	private void createNewLocalGameScreen() {
+		GameScreen newGameScreen = new GameScreen(
+				(row, col) -> {},
+				() -> Platform.runLater(() -> {
+					root.getChildren().remove(currentGUI);
+					currentGUI = mainMenu.getRoot();
+					root.getChildren().add(currentGUI);
+				}),
+                this::createNewLocalGameScreen,
+				() -> {},
+				() -> {},
+				(string) -> {},
+				true
+		);
+
+		Platform.runLater(() -> {
+			newGameScreen.startNewGame("Local Player 2", true, true, 1);
+			root.getChildren().remove(currentGUI);
+			currentGUI = newGameScreen.getCurrentDisplay();
+			root.getChildren().add(currentGUI);
+			gameScreen = newGameScreen; // update your global reference to gameScreen
+		});
 	}
 
 }
