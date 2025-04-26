@@ -5,10 +5,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import utils.CustomJavaFXElementsTools;
 
 import java.util.HashMap;
+import java.util.Stack;
 import java.util.function.Consumer;
 
 public class LobbyScreen {
