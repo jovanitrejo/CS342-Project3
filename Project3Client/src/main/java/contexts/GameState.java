@@ -63,7 +63,7 @@ public class GameState {
      * flip both the turn flag and the piece‐color flag,
      * and return the row it landed in.
      */
-    public int applyMove(int column) {
+    public void applyMove(int column) {
         int row = findFreeRow(column);
         gameBoard[row][column] = myPiece;
         return row;
