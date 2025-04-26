@@ -42,7 +42,7 @@ public class MainMenu {
         Button findNewGameButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Find New Game", 24, false);
         findNewGameButton.setOnAction(e -> findNewGameCallback.accept(true));
 
-        Button joinFromLobbyButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Join from lobby", 24, false);
+        Button joinFromLobbyButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Join From Lobby", 24, false);
         joinFromLobbyButton.setOnAction(e -> joinFromLobbyCallback.run());
 
         Button playLocallyButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Play Locally", 24, false);
@@ -68,7 +68,7 @@ public class MainMenu {
                 Insets.EMPTY
         )));
         fullWindow.setMaxSize(275, 400);
-
+        fullWindow.setPadding(new Insets(10, 10, 10, 20));
 
         root = new StackPane(welcomeText, options, fullWindow);
         StackPane.setAlignment(welcomeText, Pos.TOP_CENTER);
@@ -76,7 +76,7 @@ public class MainMenu {
         StackPane.setAlignment(fullWindow, Pos.CENTER_RIGHT);
 
         //online user list styles
-        onlineUsersText.setFont(Font.font("Londrina Solid", 32));
+        onlineUsersText.setFont(Font.font("Londrina Solid", 24));
         onlineUsersText.setStroke(Color.BLACK);
         onlineUsersText.setStrokeWidth(1);
         onlineUsersText.setFill(Color.WHITE);
@@ -154,11 +154,6 @@ public class MainMenu {
             if (!Objects.equals(username, myUsername)) {
                 Label usernameLabel = new Label();
                 usernameLabel.setText(username);
-//                Text usernameText = new Text(username);
-//                usernameText.setFont(Font.font("Londrina Solid", 20));
-//                usernameText.setStroke(Color.BLACK);
-//                usernameText.setFill(Color.WHITE);
-//                usernameText.setStrokeWidth(1);
                 Button thisButton = CustomJavaFXElementsTools.createStyledButton(60, 25, "#00B2FF", Color.WHITE, "Invite", 16, true);
                 thisButton.setOnAction(e -> {
                     System.out.println("Sending invite to: " + username);
@@ -169,6 +164,7 @@ public class MainMenu {
                 Region spacer = new Region();
                 HBox.setHgrow(spacer, Priority.ALWAYS);
                 HBox users = new HBox(usernameLabel, spacer, thisButton);
+                users.setPadding(new Insets(0, 10, 0, 0));
                 usernameLabel.setMaxWidth(100);
                 usernameLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
                 usernameLabel.setStyle("-fx-stroke-width: 1px;");
