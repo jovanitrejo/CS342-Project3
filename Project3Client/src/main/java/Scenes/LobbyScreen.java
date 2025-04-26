@@ -3,6 +3,7 @@ package Scenes;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -11,10 +12,10 @@ import javafx.scene.text.TextAlignment;
 import utils.CustomJavaFXElementsTools;
 
 import java.util.HashMap;
-import java.util.Stack;
 import java.util.function.Consumer;
 
 public class LobbyScreen {
+    private final VBox userList = new VBox();  // NEW: This will hold only the users
     VBox screen = new VBox();
     public boolean inLobby = false;
     Text waitingText = new Text("Waiting for someone to join you...");
@@ -85,15 +86,28 @@ public class LobbyScreen {
         lobbyTitle.setStyle("-fx-font-size: 40px");
 
         HBox lobbyBox = new HBox(lobbyTitle);
-        screen.getChildren().add(lobbyBox);
         lobbyBox.setAlignment(Pos.CENTER);
+
+        // Add to screen
+        userList.setSpacing(10);
+        userList.setFillWidth(true);
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(userList);
+        scrollPane.setMaxHeight(300);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+
+        // Add to the main screen
+        screen.getChildren().addAll(lobbyBox, scrollPane);
+
         StackPane.setMargin(backToMainMenuButton, new Insets(0, 0, 50, 50));
         StackPane.setMargin(joinLobbyButton, new Insets(0, 50, 50, 0));
         backToMainMenuButton.setPrefWidth(200);
         backToMainMenuButton.setPrefHeight(50);
         joinLobbyButton.setPrefWidth(200);
         joinLobbyButton.setPrefHeight(50);
-
     }
 
     public void addToLobbyScreen(String user) {
@@ -103,12 +117,18 @@ public class LobbyScreen {
         Button joinButton = CustomJavaFXElementsTools.createStyledButton(100, 50, "#00B2FF", Color.WHITE, "Join Game", 24, true);
         HBox container = new HBox(username, spacer, joinButton);
         container.setPadding(new Insets(0, 20, 0, 20));
+        container.setAlignment(Pos.CENTER_LEFT);
+
+        VBox.setVgrow(container, Priority.ALWAYS);
+        container.setPrefWidth(598);
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox.setHgrow(joinButton, Priority.NEVER); // Join button must stay fixed
+        HBox.setHgrow(username, Priority.NEVER);
+
         joinButton.setOnMouseClicked(e -> joinUserCallback.accept(user));
         usersInLobby.put(user, container);
 
-        // Add to screen
-        screen.getChildren().add(container);
-        container.setAlignment(Pos.CENTER);
+        userList.getChildren().add(container);
         username.setFill(Color.WHITE);
         username.setStyle("-fx-font-size: 30px;");
         username.setStroke(Color.BLACK);
@@ -118,7 +138,7 @@ public class LobbyScreen {
     public void removeFromLobbyScreen(String user) {
         if (usersInLobby.containsKey(user)) {
             // Remove from screen
-            screen.getChildren().remove(usersInLobby.get(user));
+            userList.getChildren().remove(usersInLobby.get(user));
         }
     }
 
