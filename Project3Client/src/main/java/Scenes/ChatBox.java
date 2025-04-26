@@ -50,6 +50,7 @@ public class ChatBox {
         TextField textBox = new TextField();
         Button sendButton = new Button();
         sendButton.setGraphic(new ImageView(new Image("Send_Button.png")));
+        textBox.setOnAction(e -> onSend(textBox, myColor));
         sendButton.setOnAction(e -> onSend(textBox, myColor));
         inputBox = new HBox(8, textBox, sendButton);
         inputBox.setPadding(new Insets(8));
