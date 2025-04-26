@@ -5,6 +5,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -78,6 +80,8 @@ public class MainMenu {
         scrollableList.setStyle("-fx-background-color: transparent;");
         scrollableList.getStyleClass().add("userList");
         scrollableList.getStylesheets().add("path/stylesheet.css");
+        scrollableList.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollableList.setFitToWidth(true);
         StackPane.setMargin(fullWindow, new Insets(0, 50, 0, 0));
 
     }
@@ -144,11 +148,13 @@ public class MainMenu {
         // Add full-list of current users to list
         for(String username : usernames) {
             if (!Objects.equals(username, myUsername)) {
-                Text usernameText = new Text(username);
-                usernameText.setFont(Font.font("Londrina Solid", 20));
-                usernameText.setStroke(Color.BLACK);
-                usernameText.setFill(Color.WHITE);
-                usernameText.setStrokeWidth(1);
+                Label usernameLabel = new Label();
+                usernameLabel.setText(username);
+//                Text usernameText = new Text(username);
+//                usernameText.setFont(Font.font("Londrina Solid", 20));
+//                usernameText.setStroke(Color.BLACK);
+//                usernameText.setFill(Color.WHITE);
+//                usernameText.setStrokeWidth(1);
                 Button thisButton = CustomJavaFXElementsTools.createStyledButton(60, 25, "#00B2FF", Color.WHITE, "Invite", 16, true);
                 thisButton.setOnAction(e -> {
                     System.out.println("Sending invite to: " + username);
@@ -156,7 +162,16 @@ public class MainMenu {
                     disableInviteButton(username);
                 });
                 availableUsers.put(username, thisButton);
-                HBox users = new HBox(usernameText, thisButton);
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+                HBox users = new HBox(usernameLabel, spacer, thisButton);
+                usernameLabel.setMaxWidth(100);
+                usernameLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
+                usernameLabel.setStyle("-fx-stroke-width: 1px;");
+                usernameLabel.setTextFill(Color.WHITE);
+                usernameLabel.setFont(Font.font("Londrina Solid", 20));
+                users.setPrefWidth(257);
+                users.setPrefHeight(30);
                 onlineUsersList.getChildren().add(users);
             }
         }
