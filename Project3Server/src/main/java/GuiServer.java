@@ -303,7 +303,7 @@ public class GuiServer extends Application{
 	private ArrayList<String> getAvailableUsers() {
 		ArrayList<String> availableUsers = new ArrayList<>();
 		for (Server.ClientThread client : serverConnection.clients) {
-			if (client.isAuthorized() && client.activeGame == null) {
+			if (client.isAuthorized() && (client.activeGame == null && !client.isPlayingOffline())) {
 				availableUsers.add(client.getUsername());
 			}
 		}
