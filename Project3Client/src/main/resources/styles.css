@@ -9,3 +9,12 @@
 .userList .viewport{
     -fx-background-color: transparent;
 }
+
+.userList .thumb{
+    -fx-border-radius: 5px;
+    -fx-background-color: rgba(125, 125, 125, 0.75);
+}
+
+.userList .scroll-bar{
+    -fx-background-color: transparent;
+}
