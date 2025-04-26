@@ -67,6 +67,7 @@ public class Server{
 			ObjectOutputStream out;
 			private String username;
 			private boolean authorized = false;
+			private boolean isPlayingOffline = false;
 			public GameSession activeGame;
 			
 			ClientThread(Socket s, int count){
@@ -118,6 +119,14 @@ public class Server{
             public void setAuthorized(boolean authorized) {
                 this.authorized = authorized;
             }
+
+			public boolean isPlayingOffline() {
+				return isPlayingOffline;
+			}
+
+			public void setPlayingOffline(boolean isPlayingOffline) {
+				this.isPlayingOffline = isPlayingOffline;
+			}
 
 			public String getUsername() {
 				return this.username;
