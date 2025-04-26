@@ -94,11 +94,6 @@ public class GameSession implements Runnable {
         player2.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player2));
     }
 
-    public void onChat(NewChatMessage chatMessage) {
-        chat.add(chatMessage.getMessageSender() + ": " + chatMessage.getMessage());
-        player1.sendMessage(new NewChatMessage(chatMessage.getMessage(), chatMessage.getMessage()));
-        player2.sendMessage(new NewChatMessage(chatMessage.getMessage(), chatMessage.getMessage()));
-    }
 
     private boolean attemptMove(int row, int col) {
         if(board[row][col] != Piece.EMPTY) {
