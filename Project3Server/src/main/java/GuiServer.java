@@ -29,7 +29,6 @@ public class GuiServer extends Application{
 
 		// Handle Login Requests on the server
 		dispatcher.registerHandler(LoginMessage.class, (loginMessage, clientThread) -> {
-			System.out.println("Got a request from the client");
 			if (Objects.equals(loginMessage.getUsername(), "") || loginMessage.getUsername().contains(" ")) {
 				clientThread.sendMessage(new LoginResponse(false, "Username cannot be empty or contain spaces!"));
 				return;
