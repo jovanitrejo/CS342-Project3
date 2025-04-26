@@ -80,7 +80,6 @@ public class GameSession implements Runnable {
             endGame();
             return;
         }
-        System.out.println("Checking for draw...");
         if(isBoardFull()) {
             Instant endTime = Instant.now();
             long minutes = Duration.between(startTime, endTime).toMinutes();
@@ -91,7 +90,6 @@ public class GameSession implements Runnable {
             return;
         }
         currentPlayer = (currentPlayer == player1 ? player2 : player1);
-        System.out.println("Sending new board to players!");
         Piece[][] boardCopy = snapshotBoard();
         player1.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player1));
         player2.sendMessage(new BoardUpdate(boardCopy, currentPlayer == player2));
