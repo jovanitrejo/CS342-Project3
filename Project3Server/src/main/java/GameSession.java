@@ -60,13 +60,10 @@ public class GameSession implements Runnable {
     }
 
     public void onMove(MoveMessage message, Server.ClientThread userWhoMadeMove) {
-        System.out.println("Checking if player could make a turn...");
         if (userWhoMadeMove != currentPlayer) return;
-        System.out.println("Checking if player turn was valid...");
         boolean successfulMove = attemptMove(message.row, message.col);
         if (!successfulMove) return;
         totalMoves++;
-        System.out.println("Checking for win");
         Pair<List<int[]>, String> winningPieces = findWinningPositions(message.row, message.col);
         if (winningPieces.getKey() != null) {
             // The game found a winning move, end the game here and notify both clients.
