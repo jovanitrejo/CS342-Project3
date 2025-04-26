@@ -235,7 +235,21 @@ public class GuiServer extends Application{
 			sendToAllAuthorizedUsers(new UpdateLobbyMessage(clientThread.getUsername(), joinedOrLeftLobby));
 		});
 
-		
+		// Creating handler for offline play
+		dispatcher.registerHandler(PlayingOfflineMessage.class, ((playingOfflineMessage, clientThread) -> {
+			Platform.runLater(() -> listItems.getItems().add(clientThread.getUsername() + " is " + (playingOfflineMessage.isPlayingOffline() ? "" : "NO LONGER") + " playing offline."));
+			String fullMessage;
+			if (playingOfflineMessage.isPlayingOffline()) {
+				fullMessage = clientThread.getUsername() + " wants to play offline. Removing from list of available users...";
+				clientThread.setPlayingOffline(true);
+			} else {
+				fullMessage = clientThread.getUsername() + " is done playing offline. Adding to list of available users...";
+				clientThread.setPlayingOffline(false);
+			}
+			Platform.runLater(() -> listItems.getItems().add(fullMessage));
+			sendToAllAuthorizedUsers(new AvailableUsersMessage(getAvailableUsers()));
+		}));
+
 		listItems = new ListView<>();
 
 		sceneMap = new HashMap<>();
