@@ -2,6 +2,7 @@ package Scenes;
 
 import MessageClasses.Piece;
 import contexts.GameState;
+import contexts.LocalGameSession;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -16,6 +17,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.control.Button;
+import javafx.util.Pair;
 import utils.CustomJavaFXElementsTools;
 
 import java.util.List;
@@ -27,6 +29,7 @@ public class GameScreen {
     private StackPane currentDisplay;
     public GameState state;
     public ChatBox chatBox;
+    private final boolean isLocalPlay;
     private final BoardSpot[][] board = new BoardSpot[6][7];
     private final BiConsumer<Integer, Integer> callback;
     private final Runnable mainMenuCallback;
@@ -34,6 +37,7 @@ public class GameScreen {
     private final Runnable replayAcceptedCallback;
     private final Runnable replayDeniedCallback;
     private final Consumer<String> sendMessageCallback;
+    private LocalGameSession localGameSession;
     private Text turnLabel;
     private Button makeMove;
     public Button replayButton;
@@ -87,16 +91,38 @@ public class GameScreen {
         }
     }
 
-    public GameScreen(BiConsumer<Integer, Integer> callback, Runnable mainMenuCallback, Runnable replayButtonCallback, Runnable replayAcceptedCallback, Runnable replayDeniedCallback, Consumer<String> sendMessageCallback) {
+    public GameScreen(BiConsumer<Integer, Integer> callback, Runnable mainMenuCallback, Runnable replayButtonCallback, Runnable replayAcceptedCallback, Runnable replayDeniedCallback, Consumer<String> sendMessageCallback, boolean isLocalPlay) {
         this.callback = callback;
         this.mainMenuCallback = mainMenuCallback;
         this.replayButtonCallback = replayButtonCallback;
         this.replayAcceptedCallback = replayAcceptedCallback;
         this.replayDeniedCallback = replayDeniedCallback;
         this.sendMessageCallback = sendMessageCallback;
-        Text waiting = new Text("Waiting for opponent...");
-        currentDisplay = new StackPane(waiting);
-        StackPane.setAlignment(waiting, Pos.CENTER);
+        this.isLocalPlay = isLocalPlay;
+
+        Text waiting = new Text("Waiting for opponent");
+        waiting.setFont(Font.font("Londrina Solid", 60));
+        waiting.setFill(Color.WHITE);
+        waiting.setStroke(Color.BLACK);
+        waiting.setStrokeWidth(1);
+
+        Text ellipses = new Text("...");
+        ellipses.setFont(Font.font("Londrina Solid", 60));
+        ellipses.setFill(Color.WHITE);
+        ellipses.setStroke(Color.BLACK);
+        ellipses.setStrokeWidth(1);
+
+        Button backToMainMenuButton = CustomJavaFXElementsTools.createStyledButton(300, 50, "#FFFFFF", Color.BLACK, "Back to Main Menu", 24, false);
+        backToMainMenuButton.setOnAction(e -> mainMenuCallback.run());
+
+        VBox fullMessage = new VBox(waiting, ellipses); // 10 px spacing between texts
+        fullMessage.setMaxWidth(650);
+        fullMessage.setAlignment(Pos.CENTER);
+
+        currentDisplay = new StackPane(fullMessage, backToMainMenuButton);
+        StackPane.setAlignment(backToMainMenuButton, Pos.BOTTOM_LEFT);
+        StackPane.setMargin(backToMainMenuButton, new Insets(0, 0, 50, 50));
+        StackPane.setAlignment(fullMessage, Pos.CENTER);
         quitButton = CustomJavaFXElementsTools.createStyledButton(100, 50, "#FF0000", Color.WHITE, "Quit", 24, true);
         quitButton.setOnAction(e -> {showPopUp(); hideQuitButton();});
         quitPopUp = CustomJavaFXElementsTools.createPopUp(() -> {mainMenuCallback.run(); handleQuit();}, () -> {hidePopUp(); showQuitButton();}, "Are you sure you want to quit?", "Yes", "No");
@@ -104,6 +130,11 @@ public class GameScreen {
 
     public void startNewGame(String opponent, boolean isRed, boolean isYourTurn, int playerSlot) {
         state = new GameState(isRed, isYourTurn, playerSlot);
+
+        if (isLocalPlay) {
+            localGameSession = new LocalGameSession();
+        }
+
         System.out.println("You are " + (isRed ? "red!" : "yellow!"));
         System.out.println("You are playing against: " + opponent);
         // Adding opponent info to screen
@@ -133,7 +164,13 @@ public class GameScreen {
         opponentInfo.setPickOnBounds(false);
 
         // Adding text to inform whose turn it is
-        turnLabel = new Text(isYourTurn ? "Your turn..." : "Opponent's Turn...");
+        String initialTurnLabelString;
+        if (isLocalPlay) {
+            initialTurnLabelString = "Player 1's turn...";
+        } else {
+            initialTurnLabelString = isYourTurn ? "Your turn..." : "Opponent's Turn...";
+        }
+        turnLabel = new Text(initialTurnLabelString);
         turnLabel.setFont(Font.font("Londrina Solid", 36));
         turnLabel.setFill(Color.WHITE);
         turnLabel.setStroke(Color.BLACK);
@@ -144,12 +181,40 @@ public class GameScreen {
         makeMove.setOnAction(e -> {
             if (selectedRow == -1 || selectedCol == -1) return;
             board[selectedRow][selectedCol].unselectPiece();
-            state.applyMove(selectedCol);
-            callback.accept(selectedRow, selectedCol);
+
+            if (isLocalPlay) {
+                // Local two-player move handling
+                localGameSession.onMove(selectedRow, selectedCol); // attempt the move and update local session
+
+                // Copy the localGameSession's board into GameState
+                Piece[][] newBoard = localGameSession.getBoard();
+                state.updateBoard(newBoard);
+
+                refreshBoardUI(); // update board
+
+                Pair<List<int[]>, String> winInfo = localGameSession.findWinningPositions(selectedRow, selectedCol);
+                if (winInfo.getKey() != null) {
+                    long minutes = 0;
+                    state.setIsYourTurn(false);
+                    this.highlightWinningPieces(winInfo.getKey());
+                    showGameEnded(false, localGameSession.player1Turn, minutes, localGameSession.getTotalMoves(), winInfo.getValue());
+                } else if (localGameSession.isBoardFull()) {
+                    long minutes = 0;
+                    state.setIsYourTurn(false);
+                    showGameEnded(true, false, minutes, localGameSession.getTotalMoves(), "None");
+                } else {
+                    changeTurnText();
+                }
+            } else {
+                // Server play logic (already correct)
+                state.applyMove(selectedCol);
+                callback.accept(selectedRow, selectedCol);
+                state.setIsYourTurn(false);
+                changeTurnText();
+            }
             selectedRow = -1;
             selectedCol = -1;
             hideMakeMoveButton();
-            state.setIsYourTurn(false);
         });
         makeMove.setPickOnBounds(false);
         GridPane grid = new GridPane();
@@ -198,11 +263,15 @@ public class GameScreen {
                 });
             }
         }
-        currentDisplay = new StackPane(grid, opponentInfo, turnLabel, quitButton, chatBox.getRoot());
+        currentDisplay = new StackPane(grid, opponentInfo, turnLabel, quitButton);
+        if (!isLocalPlay) {
+            currentDisplay.getChildren().add(chatBox.getRoot());
+        }
         StackPane.setAlignment(quitButton, Pos.TOP_RIGHT);
         StackPane.setAlignment(opponentInfo, Pos.CENTER_LEFT);
         StackPane.setAlignment(turnLabel, Pos.TOP_CENTER);
         StackPane.setAlignment(makeMove, Pos.CENTER_RIGHT);
+        StackPane.setMargin(makeMove, new Insets(0, 100, 0, 0));
         StackPane.setAlignment(chatBox.getRoot(), Pos.BOTTOM_RIGHT);
         StackPane.setMargin(quitButton, new Insets(30,30,0,0));
         StackPane.setMargin(turnLabel, new Insets(30,0,0,0));
@@ -239,11 +308,21 @@ public class GameScreen {
             turnLabel.setText("IT'S A DRAW!!!");
         } else {
             if (youWon) {
-                turnLabel.setText("YOU WIN!!!");
-                turnLabel.setFill(Color.web("#00D928"));
+                if (isLocalPlay) {
+                    turnLabel.setText("Player 1 Wins!!!");
+                    turnLabel.setFill(Color.web("#00D928"));
+                } else {
+                    turnLabel.setText("YOU WIN!!!");
+                    turnLabel.setFill(Color.web("#00D928"));
+                }
             } else {
-                turnLabel.setText("YOU LOST!!!");
-                turnLabel.setFill(Color.web("#FF0000"));
+                if (isLocalPlay) {
+                    turnLabel.setText("Player 2 Wins!!!");
+                    turnLabel.setFill(Color.web("#00D928"));
+                } else {
+                    turnLabel.setText("YOU LOST!!!");
+                    turnLabel.setFill(Color.web("#FF0000"));
+                }
             }
         }
         // Construct a replay option menu
@@ -284,12 +363,15 @@ public class GameScreen {
 
         // Add to screen
         Group menuGroup = new Group(optionsMenu);
-//        StackPane.setAlignment(menuGroup, Pos.CENTER_RIGHT);
         StackPane.setAlignment(menuGroup, Pos.TOP_RIGHT);
         StackPane.setMargin(menuGroup, new Insets(105,30,0,0));
         ObservableList<Node> kids = getCurrentDisplay().getChildren();
-        int chatIndex = kids.indexOf(chatBox.getRoot()); // add before chat box
-        kids.add(chatIndex, menuGroup);
+        if (!isLocalPlay) {
+            int chatIndex = kids.indexOf(chatBox.getRoot()); // add before chat box
+            kids.add(chatIndex, menuGroup);
+        } else {
+            kids.add(menuGroup);
+        }
     }
 
     public void showReplayPopUp() {
@@ -316,12 +398,30 @@ public class GameScreen {
     }
 
     public void changeTurnText() {
-        turnLabel.setText(state.isYourTurn() ? "Your Turn..." : "Opponent's Turn");
+        if (isLocalPlay) {
+            turnLabel.setText(localGameSession.player1Turn ? "Player 1's Turn..." : "Player 2's Turn...");
+        } else {
+            turnLabel.setText(state.isYourTurn() ? "Your Turn..." : "Opponent's Turn...");
+        }
     }
 
     public void handleQuit() {
-        Text waiting = new Text("Waiting for opponent...");
-        currentDisplay = new StackPane(waiting);
+        Text waiting = new Text("Waiting for opponent");
+        waiting.setFont(Font.font("Londrina Solid", 60));
+        waiting.setFill(Color.WHITE);
+        waiting.setStroke(Color.BLACK);
+        waiting.setStrokeWidth(1);
+
+        Text ellipses = new Text("...");
+        ellipses.setFont(Font.font("Londrina Solid", 60));
+        ellipses.setFill(Color.WHITE);
+        ellipses.setStroke(Color.BLACK);
+        ellipses.setStrokeWidth(1);
+
+        VBox fullMessage = new VBox(waiting, ellipses); // 10 px spacing between texts
+        fullMessage.setMaxWidth(650);
+        fullMessage.setAlignment(Pos.CENTER);
+        currentDisplay = new StackPane(fullMessage);
         StackPane.setAlignment(waiting, Pos.CENTER);
     }
 
@@ -329,10 +429,29 @@ public class GameScreen {
         if (selectedCol == -1 || selectedRow == -1) return;
         ObservableList<Node> kids = getCurrentDisplay().getChildren();
         if (!kids.contains(makeMove)) {
-            // find where the chat box lives:
-            int chatIndex = kids.indexOf(chatBox.getRoot());
-            // insert the button just before it:
-            kids.add(chatIndex, makeMove);
+            if (isLocalPlay) {
+                String backgroundColorHex = localGameSession.player1Turn ? "FF0000" : "FFE123";
+                String hoverColor = CustomJavaFXElementsTools.darkenHexColor(backgroundColorHex, 0.8); // 80% brightness
+
+                String baseStyle = "-fx-font-size: " + 24 + ";" +
+                        "-fx-border-color: black;" +
+                        "-fx-border-width: 1;" +
+                        "-fx-border-radius: 15;" +
+                        "-fx-background-radius: 15;" +
+                        "-fx-background-color: " + backgroundColorHex + ";";
+
+                String hoverStyle = baseStyle.replace(backgroundColorHex, hoverColor);
+
+                makeMove.setStyle(baseStyle);
+                makeMove.setOnMouseEntered(e -> makeMove.setStyle(hoverStyle));
+                makeMove.setOnMouseExited(e -> makeMove.setStyle(baseStyle));
+                kids.add(makeMove);
+            } else {
+                // find where the chat box lives:
+                int chatIndex = kids.indexOf(chatBox.getRoot());
+                // insert the button just before it:
+                kids.add(chatIndex, makeMove);
+            }
         }
     }
 
